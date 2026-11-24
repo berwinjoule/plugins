@@ -9,7 +9,7 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { ACCOUNT_DISABLED_REFUSED, agyRefusal, createUsageReader, verifyLinkIn, verifyRefused } from "./usage.mjs"
 import { catalogRows, storeCatalogRows } from "./model-ids.mjs"
-import { backgroundBlocked, cannotSignIn, forgetStoredSignIn, heldByAnother, isKeptId, keepOwn, keptFor, notHeldError, signedInEmail, storedEmail, storedSignIn, storedSignInNow } from "./signin.mjs"
+import { backgroundBlocked, cannotSignIn, forgetStoredSignIn, heldByAnother, isKeptId, keepOwn, keptFor, notHeldError, signedInEmail, storedEmail, storedSignIn, storedSignInNow, whoOf } from "./signin.mjs"
 import { sanitizePatternFields } from "./re2-pattern.mjs"
 import { startLogin } from "./login.mjs"
 import { accountsDir, currentHome, dropHome, homeIdOfAuth, homeOf, inAccount, newHome, tokenFile } from "./account.mjs"
@@ -1635,6 +1635,9 @@ class Turn {
     this.finalized = false
     this.cancelRequested = false
     this.steering = false
+    this.continuing = false
+    this.stepSeq = 0
+    this.lastToolStep = null
     this.promptInFlight = false
     this.activeAcpToolCalls = new Set()
     this.acpToolWaiters = []
@@ -2159,6 +2162,7 @@ class Proc {
     // account's, also when agy's output arrives outside the account's
     // scope (#1229)
     this.home = currentHome()
+    this.accountPrefix = opts?.accountPrefix || ""
     this.#assign(convKey, opts)
     this.workDir = opts.workDir
     this.spareKey = null
@@ -2243,6 +2247,7 @@ class Proc {
 
   // A conversation takes a warmed spare and opens its session on it.
   async adopt(convKey, opts) {
+    this.accountPrefix = opts.accountPrefix || ""
     this.#assign(convKey, opts)
     this.spareKey = null
     this.lastUsed = Date.now()
@@ -2286,7 +2291,7 @@ class Proc {
   }
 
   async #spawn() {
-    this.launchKey = await launchKey(this.agyPath, this.workDir)
+    this.launchKey = await launchKey(this.agyPath, this.workDir, this.accountPrefix || "")
     await ensureControlServer()
     const bin = await ensureShimDir()
     sessions.set(this.token, this)
@@ -2744,6 +2749,7 @@ class Proc {
     // distinct from the bridge's toolu_ IDs, so snapshot all in-flight ACP IDs.
     const pendingAcpIds = deliveringLiveMcp ? new Set(turn.activeAcpToolCalls) : new Set()
     turn.steering = true
+    turn.lastToolStep = null
     try {
       this.continueWith(results)
     } catch {
@@ -2946,6 +2952,7 @@ class Proc {
     if (turn.cancelRequested || turn.done || turn.finalized) return false
     if (turn.hasPendingMcp() || this.dead) return false
     turn.cancelRequested = true
+    turn.lastToolStep = null
     turn.detach()
     if (this.expectedMessages && partialContent.length) {
       this.expectedMessages.push({ role: "assistant", content: partialContent })
@@ -3016,6 +3023,7 @@ class Proc {
       ready: true,
       socket,
       result: null,
+      rawResultKey: null,
       deferred: false,
       lateDelivered: false,
       deadline: null,
@@ -3049,7 +3057,7 @@ class Proc {
   }
 
   #selfPollCapped(turn, target) {
-    return !turn.attached && !turn.calls.some((call) => call.clientSeen) && (
+    return !turnBusyReason(turn) && !turn.calls.some((call) => call.clientSeen) && (
       Date.now() - turn.clientProgressAt >= SELF_POLL_IDLE_TIMEOUT_MS || target.stillRunning >= SELF_POLL_LIMIT
     )
   }
@@ -3102,19 +3110,25 @@ class Proc {
     turn.notifyLate()
   }
 
-  validateResults(results) {
+  // Duplicate identity is the canonical raw tool_result (plugins#1482).
+  // inspectToolTurn may append notices onto the payload stored in call.result
+  // and forwarded to MCP; comparing that cooked payload with the raw retry is a
+  // false 409. checkCommitted:false remains for an identical last-step replay
+  // (plugins#1513) when a hot call has only the cooked result and no rawResultKey.
+  validateResults(results, { checkCommitted = true } = {}) {
     const unique = new Map()
     for (const item of results) {
       const id = item.block.tool_use_id
-      const serialized = JSON.stringify(item.result)
+      const rawKey = item.rawKey ?? JSON.stringify(item.result)
       const previous = unique.get(id)
-      if ((previous && JSON.stringify(previous.result) !== serialized) ||
-        (item.call.result && JSON.stringify(item.call.result) !== serialized)) {
+      const storedKey = item.call.rawResultKey ?? (item.call.result ? JSON.stringify(item.call.result) : null)
+      if ((previous && previous.rawKey !== rawKey) ||
+        (checkCommitted && storedKey !== null && storedKey !== rawKey)) {
         const error = new Error(`agy bridge: conflicting duplicate result for ${id}`)
         error.statusCode = 409
         throw error
       }
-      if (!previous) unique.set(id, item)
+      if (!previous) unique.set(id, item.rawKey === rawKey ? item : { ...item, rawKey })
     }
     return unique
   }
@@ -3123,21 +3137,49 @@ class Proc {
     const turn = this.turn
     if (!turn || turn.finalized) throw new BusyError("agy bridge: no response is waiting for these tool results")
     turn.touchClient()
-    for (const { call, result } of this.validateResults(results).values()) {
+    let delivered = 0
+    for (const { call, result, rawKey } of this.validateResults(results).values()) {
       clearTimeout(call.deadline)
       if (call.deferred) {
         if (!call.result) {
           call.result = result
+          call.rawResultKey = rawKey
+          delivered++
           this.#deliverLate(turn, call)
         }
         continue
       }
       if (call.mcpResponded || !call.ready || turn.done) continue
       call.result = result
+      call.rawResultKey = rawKey
+      delivered++
       this.#respondMcp(call, { result })
+    }
+    if (delivered > 0) {
+      turn.lastToolStep = null
+      turn.stepSeq++
     }
     turn.arm()
     this.lastUsed = Date.now()
+    return delivered
+  }
+
+  canReplayLastToolStep(turn, req) {
+    const last = turn?.lastToolStep
+    if (!last) return null
+    if (this.dead || this.stopping || this.retiring || this.turn !== turn) return null
+    if (turn.done || turn.finalized || turnBusyReason(turn) || turn.cancelRequested) return null
+    if (staleTurnVerdict(this, turn).stale) return null
+    if (!Array.isArray(this.expectedMessages) || this.expectedMessages.length !== last.expectedLength) return null
+    if (!sameAccount(this, req.acct) || (this.userId || "") !== req.userId || !sameSessionScope(this, req.sessionScope)) return null
+    if (!Array.isArray(last.emittedCalls) || !last.emittedCalls.length) return null
+    for (const call of last.emittedCalls) {
+      if (call.result || call.clientSeen) return null
+      if (call.mcpResponded && (!call.deferred || call.lateDelivered)) return null
+      if (this.#selfPollCapped(turn, call)) return null
+    }
+    if (!sameCallIds(req.matches, last.callIds) || !req.requestDigest || req.requestDigest !== last.requestDigest) return null
+    return last
   }
 
   #respondMcp(call, payload) {
@@ -3156,6 +3198,8 @@ class Proc {
     }
     turn.cancelledMcpSockets.clear()
     turn.steering = false
+    turn.continuing = false
+    turn.lastToolStep = null
     if (turn.stepsFile && turn.promptCount > 0 && !turn.stepUsageReconciled) {
       this.stepUsageTrusted = false
     }
@@ -3630,7 +3674,7 @@ async function evictIdle() {
   for (const [key, proc] of victims) await retire(key, proc)
   evictIdleSpares(cutoff)
   for (const { proc, turn, reason } of stale) {
-    if (proc.turn !== turn || proc.retiring) continue
+    if (proc.turn !== turn || proc.retiring || !staleTurnVerdict(proc, turn).stale) continue
     logBridgeEvent(proc, turn, "reclaim", reason, {}, { trigger: "evict_idle" })
     await reclaimStaleTurn(proc, turn)
   }
@@ -3655,7 +3699,7 @@ async function evictLRU() {
   let victim = null
   for (const proc of pool.values()) {
     const turn = proc.turn
-    if (proc.retiring || !turn || turn.attached || turn.cancelRequested || turn.steering) continue
+    if (proc.retiring || !turn || turnBusyReason(turn) || turn.cancelRequested) continue
     const since = turn.clientProgressAt ?? turn.lastProgressAt
     if (!staleTurnVerdict(proc, turn, now).stale && now - since < bound) continue
     if (!victim || since < victim.since) victim = { proc, turn, since }
@@ -3690,11 +3734,11 @@ function sparesOn() {
 }
 
 // Everything that decides how Proc starts agy for the current work.
-async function launchKey(agyPath, workDir) {
+async function launchKey(agyPath, workDir, accountPrefix = "") {
   let mtime = 0
   try { mtime = (await fs.promises.stat(agyPath)).mtimeMs } catch {}
   const own = await geminiDirArgs(agyPath)
-  return digest(JSON.stringify([currentHome(), agyPath, mtime, workDir || "",
+  return digest(JSON.stringify([currentHome(), accountPrefix || "", agyPath, mtime, workDir || "",
     await noDefaultCustomizationsArgs(agyPath), await telemetryArgs(agyPath), own.args, childEnv(process.env)]))
 }
 
@@ -3703,9 +3747,9 @@ function dropSpare(spare) {
   return spare.stop().catch(() => {})
 }
 
-async function takeSpare(agyPath, workDir) {
+async function takeSpare(agyPath, workDir, accountPrefix = "") {
   if (!spares.size || !sparesOn()) return null
-  const key = await launchKey(agyPath, workDir)
+  const key = await launchKey(agyPath, workDir, accountPrefix)
   const spare = spares.get(key)
   if (!spare) return null
   spares.delete(key)
@@ -3721,9 +3765,9 @@ async function takeSpare(agyPath, workDir) {
   return spare
 }
 
-async function warmSpare(agyPath, workDir) {
+async function warmSpare(agyPath, workDir, accountPrefix = "") {
   if (!agyPath || !sparesOn()) return
-  const key = await launchKey(agyPath, workDir)
+  const key = await launchKey(agyPath, workDir, accountPrefix)
   if (spares.has(key)) return
   // never at the cost of a conversation's room
   if (allProcs.size + 1 >= maxProcs()) return
@@ -3733,7 +3777,7 @@ async function warmSpare(agyPath, workDir) {
     await dropSpare(oldest)
   }
   if (spares.has(key) || allProcs.size + 1 >= maxProcs()) return
-  const proc = new Proc(agyPath, null, { workDir })
+  const proc = new Proc(agyPath, null, { workDir, accountPrefix })
   proc.spareKey = key
   spares.set(key, proc)
   proc.ready = proc.warm().catch(async (error) => {
@@ -3782,7 +3826,7 @@ async function acquireProc(agyPath, convKey, opts, isFreshConversation, forceNew
   // locks. A process is re-keyed only when its current key is already held.
   let extra = null
   const launch = !forceNew && isFreshConversation && statelessRequest(opts)
-    ? await launchKey(agyPath, opts.workDir).catch(() => null) : null
+    ? await launchKey(agyPath, opts.workDir, opts.accountPrefix || "").catch(() => null) : null
   for (let attempt = 0; ; attempt++) {
     const keys = extra && extra !== convKey ? [convKey, extra] : [convKey]
     const outcome = await withAcquireLocks(keys, async () => {
@@ -3904,7 +3948,7 @@ async function acquireProcLocked(agyPath, convKey, opts, isFreshConversation, fo
       if (why === "history") historyDiff = firstHistoryDiff(existing.expectedMessages, matchedHistory)
     }
     if (!forceNew && launch && statelessRequest(opts) &&
-      statelessDonor(existing, launch, opts.userId || "", opts.sessionScope || "", opts.workDir)) {
+      statelessDonor(existing, launch, opts.userId || "", opts.sessionScope || "", opts.workDir, opts)) {
       // the same stateless request again: its agy answers it in a new session
       return await reuseStateless(existing, key, opts, why)
     }
@@ -3918,7 +3962,7 @@ async function acquireProcLocked(agyPath, convKey, opts, isFreshConversation, fo
   }
   const resume = forceNew || isFreshConversation ? null : takeParked(convKey, opts)
   // a spare runs in a folder of its own, and a resumed session needs its own
-  const spare = resume?.workspace ? null : await takeSpare(agyPath, opts.workDir)
+  const spare = resume?.workspace ? null : await takeSpare(agyPath, opts.workDir, opts.accountPrefix || "")
   while (!spare && allProcs.size >= maxProcs()) {
     const idle = spares.values().next().value
     if (idle) {
@@ -3939,7 +3983,7 @@ async function acquireProcLocked(agyPath, convKey, opts, isFreshConversation, fo
   }
   pool.set(key, proc)
   // the next new conversation of this account and folder takes one ready
-  warmSpare(agyPath, opts.workDir).catch(() => {})
+  warmSpare(agyPath, opts.workDir, opts.accountPrefix || "").catch(() => {})
   // Why this request got a new agy session, so a cache that never hits can be
   // traced to the check that failed (#1058). Counts only, never content.
   proc.sessionReason = why
@@ -4045,10 +4089,18 @@ function logSessionEvent(proc, reason, extra, action = "session_new") {
   try { process.stderr.write("[agy-bridge] " + JSON.stringify(row) + "\n") } catch {}
 }
 
+function turnBusyReason(turn) {
+  if (!turn) return null
+  if (turn.attached) return "attached"
+  if (turn.steering) return "steering"
+  if (turn.continuing) return "continuing"
+  return null
+}
+
 function staleTurnVerdict(proc, turn, now = Date.now()) {
   if (!turn || turn.cancelRequested) return { stale: false, reason: "cancelling" }
-  if (turn.attached) return { stale: false, reason: "attached" }
-  if (turn.steering) return { stale: false, reason: "steering" }
+  const busy = turnBusyReason(turn)
+  if (busy) return { stale: false, reason: busy }
   if (turn.finalized) return { stale: true, reason: "finalized" }
   if (proc.dead || proc.stopping) return { stale: true, reason: "dead" }
   if (turn.done) return { stale: true, reason: "done" }
@@ -4066,7 +4118,7 @@ function staleTurnVerdict(proc, turn, now = Date.now()) {
 // request can answer the held turn, so waiting for three unmatched requests
 // before replaying only costs the client two 409s.
 function movedOnVerdict(turn, messages) {
-  if (!turn || turn.attached || turn.steering || turn.cancelRequested || !Array.isArray(messages)) return null
+  if (!turn || turnBusyReason(turn) || turn.cancelRequested || !Array.isArray(messages)) return null
   if (!pendingCallCount(turn)) return null
   const own = new Set(turn.calls.map((call) => call.id))
   let last = -1
@@ -4083,7 +4135,7 @@ function movedOnVerdict(turn, messages) {
 // A pending tool turn only owns its own line of history, not a sibling request
 // that continues its base without carrying any of the emitted tool calls.
 function lineageVerdict(proc, turn, opts) {
-  if (!turn || turn.attached || turn.cancelRequested || turn.steering || turn.done || turn.finalized) return null
+  if (!turn || turnBusyReason(turn) || turn.cancelRequested || turn.done || turn.finalized) return null
   if (proc.dead || proc.stopping || proc.retiring || !turn.hasPendingMcp()) return null
   const history = opts.history
   const base = turn.baseHistory
@@ -4184,11 +4236,15 @@ function replayHistoryProblem(body, resultBlocks) {
 async function keepDroppedTurn(proc, turn, opts) {
   if (proc.toolsGrew(opts.tools) || proc.workDir !== opts.workDir ||
     !sameInstructions(proc.instructions, opts.instructions)) return false
-  const results = turn.calls.filter((call) => call.id && !call.result && !call.mcpResponded).map((call) => ({
-    block: { tool_use_id: call.id },
-    call,
-    result: { content: [{ type: "text", text: DROPPED_NOTE }], isError: true },
-  }))
+  const results = turn.calls.filter((call) => call.id && !call.result && !call.mcpResponded).map((call) => {
+    const result = { content: [{ type: "text", text: DROPPED_NOTE }], isError: true }
+    return {
+      block: { tool_use_id: call.id },
+      call,
+      result,
+      rawKey: JSON.stringify(result),
+    }
+  })
   try {
     return await proc.steerInSession(turn, results, opts.history)
   } catch {
@@ -4231,7 +4287,7 @@ async function recoverStaleTurn(ctx) {
       return { kind: "active", reason: "replaced" }
     }
     const verdict = movedOnVerdict(held, ctx.body?.messages) ?? staleTurnVerdict(current, held)
-    if (!verdict.stale && (verdict.reason === "attached" || verdict.reason === "steering")) {
+    if (!verdict.stale && (verdict.reason === "attached" || verdict.reason === "steering" || verdict.reason === "continuing")) {
       logBridgeEvent(current, held, "reject_active", verdict.reason, ctx.acquireOpts)
       return { kind: "active", reason: verdict.reason }
     }
@@ -4783,16 +4839,16 @@ function findStatelessDonor(opts, launch) {
   const sessionScope = opts.sessionScope || ""
   let best = null
   for (const proc of pool.values()) {
-    if (!statelessDonor(proc, launch, userId, sessionScope, opts.workDir)) continue
+    if (!statelessDonor(proc, launch, userId, sessionScope, opts.workDir, opts)) continue
     if (!best || proc.lastUsed < best.lastUsed) best = proc
   }
   return best
 }
 
-function statelessDonor(proc, launch, userId, sessionScope, workDir) {
+function statelessDonor(proc, launch, userId, sessionScope, workDir, acct) {
   return !!proc && proc.stateless && !proc.dead && !proc.stopping && !proc.retiring && !proc.turn &&
     !proc.resumed && proc.hasSentFirstTurn && proc.sessionPrompts === 1 && !!proc.sessionId &&
-    proc.launchKey === launch && (proc.userId || "") === userId &&
+    proc.launchKey === launch && sameAccount(proc, acct) && (proc.userId || "") === userId &&
     (proc.sessionScope || "") === sessionScope && proc.workDir === workDir
 }
 
@@ -4806,6 +4862,7 @@ function findLiveContinuedProc(opts) {
   let tied = false
   for (const proc of pool.values()) {
     if (proc.dead || proc.retiring || proc.turn) continue
+    if (!sameAccount(proc, opts)) continue
     if ((proc.userId || "") !== userId) continue
     if ((proc.sessionScope || "") !== sessionScope) continue
     if (proc.workDir !== opts.workDir) continue
@@ -5304,12 +5361,50 @@ function sameSessionScope(proc, sessionScope = "") {
   return (proc?.sessionScope || "") === sessionScope
 }
 
-function matchToolResults(body, blocks, sessionScope = "") {
+function accountPartition(home, email, stored) {
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : ""
+  const reqWho = !home ? ((stored?.state === "present" && stored.who) || whoOf(normalizedEmail)) : ""
+  const accountPrefix = home ? `acct:${path.basename(home)}:` : reqWho ? `who:${reqWho}:` : ""
+  return { home: home ?? null, accountPrefix }
+}
+
+function sameAccount(proc, acct) {
+  return !!proc && (proc.home ?? null) === (acct?.home ?? null) &&
+    (proc.accountPrefix || "") === (acct?.accountPrefix || "")
+}
+
+function sameCallIds(matches, callIds) {
+  return Array.isArray(callIds) && matches.length === callIds.length &&
+    matches.every((item, i) => item.block.tool_use_id === callIds[i])
+}
+
+function toolStepRequestDigest({ trailing, matches, results, workDir, instructions, tools, model, wireModel, effort, forwardThinking, outputFormat }) {
+  return digest(stableJSON({
+    history: historyKey(trailing.history),
+    tail: historyKey(trailing.messages),
+    callIds: matches.map((m) => m.block.tool_use_id),
+    results: results.map((r) => [r.block.tool_use_id, r.result]),
+    workDir,
+    instructions,
+    tools: stableJSON(tools),
+    model,
+    wireModel,
+    effort,
+    forwardThinking,
+    outputFormat,
+  }))
+}
+
+function matchToolResults(body, blocks, sessionScope = "", acct = null, userId = "") {
   const direct = blocks.map(block => {
     const entry = toolCalls.get(block.tool_use_id)
-    return { block, match: entry && sameSessionScope(entry.proc, sessionScope) ? entry : undefined }
+    if (!entry) return { block, match: undefined, rejected: false }
+    const ok = sameSessionScope(entry.proc, sessionScope) &&
+      (!acct || sameAccount(entry.proc, acct)) &&
+      (entry.proc.userId || "") === userId
+    return { block, match: ok ? entry : undefined, rejected: !ok }
   })
-  if (direct.every(item => item.match)) return direct
+  if (direct.every(item => item.match) || direct.some(item => item.rejected)) return direct
   const { history } = trailingMessages(body)
   const calls = lastAssistantCalls(history)
   const byID = new Map(calls.map((call, index) => [call.id, index]))
@@ -5317,7 +5412,7 @@ function matchToolResults(body, blocks, sessionScope = "") {
     blocks.some(block => !byID.has(block.tool_use_id))) return direct
   let found = null
   for (const proc of allProcs) {
-    if (!sameSessionScope(proc, sessionScope) || !proc.turn || proc.turn.finalized || !proc.matchesHistory(history)) continue
+    if (!sameSessionScope(proc, sessionScope) || (acct && !sameAccount(proc, acct)) || !proc.turn || proc.turn.finalized || !proc.matchesHistory(history)) continue
     const shown = lastAssistantCalls(proc.expectedMessages)
     if (shown.length !== calls.length || shown.some((call, index) =>
       call.name !== calls[index].name || stableJSON(call.input ?? {}) !== stableJSON(calls[index].input ?? {}))) continue
@@ -5327,6 +5422,7 @@ function matchToolResults(body, blocks, sessionScope = "") {
     if (found) throw new BusyError("agy bridge: renamed tool IDs match more than one pending conversation")
     found = mapped
   }
+  if (found && (found[0].match.proc.userId || "") !== userId) return direct
   return found || direct
 }
 
@@ -7102,9 +7198,10 @@ function thinkingSignature(sessionId, thinking) {
     createHmac("sha256", THINKING_KEY).update(String(sessionId) + "\n" + thinking).digest("base64url")
 }
 
-function makeAnthropicStream(proc, turn, body, msgId, signal, step = turn.registerResponse(body)) {
+function makeAnthropicStream(proc, turn, body, msgId, signal, step = turn.registerResponse(body), toolResultStep = null) {
   const encoder = new TextEncoder()
   const responseContent = []
+  const emittedCalls = []
   const forwardThinking = FORWARD_THINKING && body.thinking?.type !== "disabled"
   let blockIndex = 0
   let open = null
@@ -7174,6 +7271,7 @@ function makeAnthropicStream(proc, turn, body, msgId, signal, step = turn.regist
         send("content_block_stop", { type: "content_block_stop", index: blockIndex })
         blockIndex++
         responseContent.push({ type: "tool_use", id: call.id, name: call.name, input: call.arguments })
+        emittedCalls.push(call)
       }
       const detach = () => {
         finished = true
@@ -7272,6 +7370,20 @@ function makeAnthropicStream(proc, turn, body, msgId, signal, step = turn.regist
             if (finished) return
             stopMessage("tool_use", usage, false, step.usageKind === "agy_model_call")
             proc.recordAssistantResponse(turn, responseContent)
+            if (toolResultStep && emittedCalls.length > 0 && proc.turn === turn &&
+              !proc.dead && !proc.stopping && !proc.retiring &&
+              !turn.done && !turn.finalized && !turn.cancelRequested &&
+              turn.stepSeq === toolResultStep.stepSeq && Array.isArray(proc.expectedMessages)) {
+              turn.lastToolStep = {
+                callIds: toolResultStep.callIds,
+                requestDigest: toolResultStep.requestDigest,
+                expectedLength: proc.expectedMessages.length,
+                msgId,
+                wireModel: toolResultStep.wireModel,
+                emittedCalls,
+                content: structuredClone(responseContent),
+              }
+            }
             detach()
             controller.close()
             return
@@ -7468,20 +7580,119 @@ async function jsonResponseFromStream(stream, fallbackModel, fallbackId) {
   })
 }
 
-function streamResponse(proc, turn, body, signal) {
+const SSE_HEADERS = {
+  "Content-Type": "text/event-stream",
+  "Cache-Control": "no-cache",
+  "Connection": "keep-alive",
+}
+
+function streamResponse(proc, turn, body, signal, toolResultStep = null) {
   turn.attach()
   const step = turn.registerResponse(body)
   const msgId = "msg_" + randomUUID().replace(/-/g, "").slice(0, 24)
-  const stream = makeAnthropicStream(proc, turn, body, msgId, signal, step)
+  const stream = makeAnthropicStream(proc, turn, body, msgId, signal, step, toolResultStep)
   if (body.stream === false) return jsonResponseFromStream(stream, body.model, msgId)
   return new Response(stream, {
     status: 200,
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+    headers: SSE_HEADERS,
+  })
+}
+
+function abortedResponse(body, signal, fallbackModel, fallbackId) {
+  const abortedStream = new ReadableStream({
+    start(controller) {
+      controller.error(signal.reason || new Error("request aborted"))
     },
   })
+  if (body.stream === false) return jsonResponseFromStream(abortedStream, fallbackModel, fallbackId)
+  return new Response(abortedStream, { status: 200, headers: SSE_HEADERS })
+}
+
+function replayToolStepResponse(last, body, signal) {
+  if (signal?.aborted) return abortedResponse(body, signal, last.wireModel, last.msgId)
+  const encoder = new TextEncoder()
+  const content = structuredClone(last.content)
+  const stream = new ReadableStream({
+    start(controller) {
+      const send = (event, data) => controller.enqueue(encoder.encode(sseEvent(event, data)))
+      send("message_start", {
+        type: "message_start",
+        message: {
+          id: last.msgId,
+          type: "message",
+          role: "assistant",
+          model: last.wireModel,
+          content: [],
+          stop_reason: null,
+          stop_sequence: null,
+          usage: { input_tokens: 0, output_tokens: 0 },
+        },
+      })
+      let index = 0
+      for (const block of content) {
+        if (block.type === "text") {
+          send("content_block_start", {
+            type: "content_block_start",
+            index,
+            content_block: { type: "text", text: "" },
+          })
+          if (block.text) {
+            send("content_block_delta", {
+              type: "content_block_delta",
+              index,
+              delta: { type: "text_delta", text: block.text },
+            })
+          }
+          send("content_block_stop", { type: "content_block_stop", index })
+          index++
+        } else if (block.type === "thinking") {
+          send("content_block_start", {
+            type: "content_block_start",
+            index,
+            content_block: { type: "thinking", thinking: "" },
+          })
+          if (block.thinking) {
+            send("content_block_delta", {
+              type: "content_block_delta",
+              index,
+              delta: { type: "thinking_delta", thinking: block.thinking },
+            })
+          }
+          if (block.signature) {
+            send("content_block_delta", {
+              type: "content_block_delta",
+              index,
+              delta: { type: "signature_delta", signature: block.signature },
+            })
+          }
+          send("content_block_stop", { type: "content_block_stop", index })
+          index++
+        } else if (block.type === "tool_use") {
+          send("content_block_start", {
+            type: "content_block_start",
+            index,
+            content_block: { type: "tool_use", id: block.id, name: block.name, input: {} },
+          })
+          send("content_block_delta", {
+            type: "content_block_delta",
+            index,
+            delta: { type: "input_json_delta", partial_json: JSON.stringify(block.input ?? {}) },
+          })
+          send("content_block_stop", { type: "content_block_stop", index })
+          index++
+        }
+      }
+      send("message_delta", {
+        type: "message_delta",
+        delta: { stop_reason: "tool_use", stop_sequence: null },
+        usage: { input_tokens: 0, output_tokens: 0 },
+      })
+      send("message_stop", { type: "message_stop" })
+      controller.close()
+    },
+  })
+  if (body.stream === false) return jsonResponseFromStream(stream, last.wireModel, last.msgId)
+  return new Response(stream, { status: 200, headers: SSE_HEADERS })
 }
 
 // Tool results a kept session already holds (answered to its live MCP calls
@@ -7831,8 +8042,9 @@ export const AntigravityBridgePlugin = async () => {
             if (!agy) return jsonError(503, "agy CLI not found on this machine")
             // nothing stored to sign agy in with: agy would only start its
             // own Google sign-in, so the account is told to sign in again
-            // (from the last read; a request doesn't wait for a new one)
-            const stored = storedSignInNow()
+            // (from the last read; on a cold default account wait once so the
+            // first session binds to the same account partition as follow-ups)
+            const stored = storedSignInNow() ?? (!home ? await storedSignIn() : null)
             const notSignedIn = cannotSignIn(stored)
             if (notSignedIn) {
               // out of reach, signing in again here mends nothing
@@ -7865,8 +8077,10 @@ export const AntigravityBridgePlugin = async () => {
             const model = resolveAgyModel(await loadModelCatalog(agy), requestedModel, body)
             const selection = { model: requestedModel, effort: requestedEffort(body) }
             const sessionScope = requestSessionScope(fetchInput, init)
+            const acct = accountPartition(home, email, stored)
+            const reqUserId = body.metadata?.user_id || ""
             // an account's conversations are its own: its agy has them
-            const convKey = (home ? `acct:${path.basename(home)}:` : "") + conversationKey(body, sessionScope)
+            const convKey = acct.accountPrefix + conversationKey(body, sessionScope)
             const trailing = trailingMessages(body)
             const isFresh = trailing.history.length === 0
             const resultBlocks = extractToolResults(body)
@@ -7876,14 +8090,17 @@ export const AntigravityBridgePlugin = async () => {
 
             try {
               const tools = normalizeTools(body)
-              for (const message of body.messages) {
-                if (message.role !== "assistant" || !Array.isArray(message.content)) continue
-                for (const block of message.content) {
-                  if (block?.type !== "tool_use") continue
-                  const entry = toolCalls.get(block.id)
-                  if (!entry || entry.call.clientSeen || !sameSessionScope(entry.proc, sessionScope)) continue
-                  entry.call.clientSeen = true
-                  entry.turn.touchClient()
+              if (!init.signal?.aborted) {
+                for (const message of body.messages) {
+                  if (message.role !== "assistant" || !Array.isArray(message.content)) continue
+                  for (const block of message.content) {
+                    if (block?.type !== "tool_use") continue
+                    const entry = toolCalls.get(block.id)
+                    if (!entry || entry.call.clientSeen || !sameSessionScope(entry.proc, sessionScope) ||
+                      !sameAccount(entry.proc, acct) || (entry.proc.userId || "") !== reqUserId) continue
+                    entry.call.clientSeen = true
+                    entry.turn.touchClient()
+                  }
                 }
               }
               const reqId = "req_" + randomBytes(4).toString("hex")
@@ -7896,12 +8113,13 @@ export const AntigravityBridgePlugin = async () => {
               }
               const acquireOpts = { model, selection, tools, workDir, instructions, history: trailing.history,
                 messages: body.messages, layout, nonstream: body.stream === false, reqId, convKey,
-                hasToolResults: resultBlocks.length > 0, userId: body.metadata?.user_id || "", sessionScope }
+                home: acct.home, accountPrefix: acct.accountPrefix,
+                hasToolResults: resultBlocks.length > 0, userId: reqUserId, sessionScope }
               let answeredIds = null
               const begin = (proc, history) => beginTurn(proc, history, body, callerWorkDir, model, selection, answeredIds)
               let keptSession = false
               if (resultBlocks.length) {
-                const matches = matchToolResults(body, resultBlocks, sessionScope)
+                const matches = matchToolResults(body, resultBlocks, sessionScope, acct, reqUserId)
                 const found = matches.filter((item) => item.match)
                 if (found.length) {
                   if (found.length !== matches.length) {
@@ -7913,14 +8131,27 @@ export const AntigravityBridgePlugin = async () => {
                     return jsonError(409, "agy bridge: tool results from different conversations cannot be combined")
                   }
                   if (proc.turn !== turn) return jsonError(409, "agy bridge: the tool response has already completed")
-                  if (turn.attached) throw new BusyError("agy bridge: this conversation already has an active response")
-                  if (turn.steering) throw new BusyError("agy bridge: this conversation is already steering this tool turn")
-                  const rawResults = matches.map(({ block, match }) => ({
-                    block,
-                    call: match.call,
-                    result: toolResult(block),
-                  }))
-                  proc.validateResults(rawResults)
+                  const busy = turnBusyReason(turn)
+                  if (busy) {
+                    throw new BusyError(busy === "steering"
+                      ? "agy bridge: this conversation is already steering this tool turn"
+                      : "agy bridge: this conversation already has an active response")
+                  }
+                  // Notices appended by inspectToolTurn belong in call.result for
+                  // agy, while duplicate checks compare the raw tool_result (#1482).
+                  const rawResults = matches.map(({ block, match }) => {
+                    const result = toolResult(block)
+                    return {
+                      block,
+                      call: match.call,
+                      result,
+                      rawKey: JSON.stringify(result),
+                    }
+                  })
+                  const directIdsMatch = matches.every((item) => item.match?.call?.id === item.block.tool_use_id)
+                  const isReplayCandidate = directIdsMatch && Boolean(turn.lastToolStep && sameCallIds(matches, turn.lastToolStep.callIds))
+                  if (isReplayCandidate) proc.validateResults(rawResults, { checkCommitted: false })
+                  else proc.validateResults(rawResults)
                   let interrupted = isInterruptedToolTurn(body)
                   let results = rawResults
                   if (!interrupted) {
@@ -7932,25 +8163,67 @@ export const AntigravityBridgePlugin = async () => {
                       if (error instanceof UnsupportedContent && canReplayFollowUpAfterResults(body, rawResults)) {
                         interrupted = true
                       } else {
+                        if (isReplayCandidate) proc.validateResults(rawResults)
                         throw error
                       }
                     }
                   }
+                  if (isReplayCandidate && interrupted) proc.validateResults(rawResults)
                   if (!interrupted) proc.validateResults(results)
+                  if (init.signal?.aborted) {
+                    return abortedResponse(body, init.signal, body.model, "msg_" + randomUUID().replace(/-/g, "").slice(0, 24))
+                  }
                   // An image over MCP reaches agy's model as a path it can't
                   // read, so a result with one takes the steer's way: the call
                   // gets the text, the next prompt the image.
                   const imageResult = proc.supportsImages && results.some((item) => resultHasImage(item.result))
-                  const directIdsMatch = matches.every((item) => item.match?.call?.id === item.block.tool_use_id)
+                  const forwardThinking = FORWARD_THINKING && body.thinking?.type !== "disabled"
+                  let requestDigest = null
+                  if (!interrupted && !imageResult && directIdsMatch) {
+                    try {
+                      const outputFormat = stableJSON(outputFormatReminder(body))
+                      requestDigest = toolStepRequestDigest({
+                        trailing,
+                        matches,
+                        results,
+                        workDir,
+                        instructions,
+                        tools,
+                        model,
+                        wireModel: body.model,
+                        effort: selection.effort,
+                        forwardThinking,
+                        outputFormat,
+                      })
+                    } catch {
+                      requestDigest = null
+                    }
+                  }
                   const historyMatches = directIdsMatch
-                    ? proc.matchesPendingTurnHistory(turn, trailingMessages(body).history)
-                    : proc.matchesHistory(trailingMessages(body).history)
+                    ? proc.matchesPendingTurnHistory(turn, trailing.history)
+                    : proc.matchesHistory(trailing.history)
+                  if (!historyMatches && !interrupted && !imageResult && directIdsMatch) {
+                    const replay = proc.canReplayLastToolStep(turn, {
+                      acct,
+                      userId: reqUserId,
+                      sessionScope,
+                      matches,
+                      requestDigest,
+                    })
+                    if (replay) {
+                      turn.touchClient()
+                      turn.arm()
+                      proc.lastUsed = Date.now()
+                      logBridgeEvent(proc, turn, "replay_tool_step", "idempotent_retry", acquireOpts, { calls: replay.emittedCalls.length })
+                      return replayToolStepResponse(replay, body, init.signal)
+                    }
+                  }
                   // A steer keeps the live session, so agy's prompt cache holds: the
                   // calls are answered with their real results, the step is
                   // cancelled, and the steer goes in as the next prompt.
                   if ((interrupted || imageResult) && historyMatches && !proc.toolsGrew(tools) && proc.workDir === workDir &&
                     sameInstructions(proc.instructions, instructions) &&
-                    await proc.steerInSession(turn, rawResults, trailingMessages(body).history)) {
+                    await proc.steerInSession(turn, rawResults, trailing.history)) {
                     keptSession = true
                     answeredIds = new Set(
                       rawResults
@@ -7969,7 +8242,7 @@ export const AntigravityBridgePlugin = async () => {
                       : proc.workDir !== workDir ? "work_dir"
                       : "instructions"
                     logBridgeEvent(proc, turn, "drop_live", dropReason, acquireOpts, {
-                      history: trailingMessages(body).history.length,
+                      history: trailing.history.length,
                       expected_history: Array.isArray(proc.expectedMessages) ? proc.expectedMessages.length : null,
                       // an interrupted turn is dropped when its history differs too
                       history_matches: historyMatches,
@@ -7978,19 +8251,45 @@ export const AntigravityBridgePlugin = async () => {
                       instructions_changed: !sameInstructions(proc.instructions, instructions),
                       // where the history the client sent first differs from
                       // the session's, with no text (yetone/magpie#7223)
-                      first_diff: historyMatches ? null : firstHistoryDiff(proc.expectedMessages, trailingMessages(body).history),
+                      first_diff: historyMatches ? null : firstHistoryDiff(proc.expectedMessages, trailing.history),
                     })
                     acquireOpts.dropReason = dropReason
                     dropFromPool(proc)
                     proc.abandonTurn(turn)
                     await proc.stop()
                   } else {
+                    let toolResultStep = null
                     if (!proc.dead && !turn.done) {
-                      // A tool catalog that lost or changed tools applies to the
-                      // rest of this turn; a model change applies from the next prompt.
-                      await proc.updateTools(tools)
-                      proc.continueWith(results)
-                      proc.recordToolResults(turn, body.messages)
+                      turn.continuing = true
+                      try {
+                        // A tool catalog that lost or changed tools applies to the
+                        // rest of this turn; a model change applies from the next prompt.
+                        await proc.updateTools(tools)
+                        if (init.signal?.aborted) {
+                          return abortedResponse(body, init.signal, body.model, "msg_" + randomUUID().replace(/-/g, "").slice(0, 24))
+                        }
+                        if (proc.turn !== turn || proc.stopping || proc.retiring || turn.finalized ||
+                          turn.cancelRequested || turn.attached || turn.steering) {
+                          throw new BusyError("agy bridge: the tool turn is no longer accepting results")
+                        }
+                        if (!proc.dead && !turn.done) {
+                          const delivered = proc.continueWith(results)
+                          if (delivered > 0) {
+                            proc.recordToolResults(turn, body.messages)
+                            if (directIdsMatch && requestDigest) {
+                              toolResultStep = {
+                                stepSeq: turn.stepSeq,
+                                callIds: matches.map((item) => item.block.tool_use_id),
+                                requestDigest,
+                                wireModel: body.model,
+                              }
+                            }
+                          }
+                        }
+                        return streamResponse(proc, turn, body, init.signal, toolResultStep)
+                      } finally {
+                        turn.continuing = false
+                      }
                     }
                     return streamResponse(proc, turn, body, init.signal)
                   }
@@ -8008,7 +8307,7 @@ export const AntigravityBridgePlugin = async () => {
                   // a round the request itself can't replay is refused, with
                   // a 400 that stops retries and leaves the held turn alone.
                   const verdict = movedOnVerdict(held.turn, body.messages) ?? staleTurnVerdict(held, held.turn)
-                  if (!verdict.stale && (verdict.reason === "attached" || verdict.reason === "steering")) {
+                  if (!verdict.stale && (verdict.reason === "attached" || verdict.reason === "steering" || verdict.reason === "continuing")) {
                     logBridgeEvent(held, held.turn, "reject_active", verdict.reason, acquireOpts)
                     throw new BusyError(verdict.reason === "steering"
                       ? "agy bridge: this conversation is already steering this tool turn"

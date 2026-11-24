@@ -1,0 +1,275 @@
+TAP version 13
+# (node:3436) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"cf591b0a","ts":1793793600000,"conv":"85ce97fcb2d3","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: 1. Linux default account with companion note and deferred parallel calls replays identically via SSE and non-stream
+not ok 1 - 1. Linux default account with companion note and deferred parallel calls replays identically via SSE and non-stream
+  ---
+  duration_ms: 154.855084
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:75:1'
+  failureType: 'testCodeFailure'
+  error: 'HTTP 409: {"type":"error","error":{"type":"api_error","message":"agy bridge: conflicting duplicate result for toolu_a8d1dd224dc840049362b607"}}'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    readSse (file:///workspace/packages/agy-cli/test/testkit.mjs:730:38)
+    async file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:147:21
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:76:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"38bab646","ts":1793793600000,"conv":"3f1097ca7f8f","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: 2. switching default darwin keyring account A to B isolates pools without dropping A's live turn
+not ok 2 - 2. switching default darwin keyring account A to B isolates pools without dropping A's live turn
+  ---
+  duration_ms: 95.429218
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:185:1'
+  failureType: 'testCodeFailure'
+  error: 'The "string" argument must be of type string. Received type undefined (undefined)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'match'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:226:12
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:190:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f729f38b","ts":1793793600000,"conv":"533d881f71ce","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"f729f38b","ts":1793793605000,"req_id":"req_8a187625","conv":"533d881f71ce","turn_id":"turn_d2781224dab3","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":5000,"client_idle_ms":5000,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f729f38b","ts":1793793605000,"conv":"49c40c0755d6","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f729f38b","ts":1793793605000,"conv":"49c40c0755d6","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":109,"bytes_after":109,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":80,"turn_clipped":false,"prompt_bytes":538}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f729f38b","ts":1793793605000,"conv":"49c40c0755d6","action":"prompt","reason":"history_mismatch","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f729f38b","ts":1793793605000,"conv":"49c40c0755d6","action":"session_new","reason":"forced","fresh":false,"resumed":false,"spare":false,"parked":false,"history":4,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f729f38b","ts":1793793605000,"conv":"49c40c0755d6","action":"replay","reason":"forced","messages_before":4,"messages_after":4,"user_before":1,"user_after":1,"bytes_before":285,"bytes_after":285,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":85,"turn_clipped":false,"prompt_bytes":719}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f729f38b","ts":1793793605000,"conv":"49c40c0755d6","action":"prompt","reason":"forced","ttft_ms":0,"prompt_ms":0}
+# Subtest: 3. another user_id sending A's direct C1 or direct C2 never touches A's live turn
+not ok 3 - 3. another user_id sending A's direct C1 or direct C2 never touches A's live turn
+  ---
+  duration_ms: 105.191512
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:263:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:315:12
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:264:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"6bd3aec1","ts":1793793600000,"conv":"263a0003f8e8","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"6bd3aec1","ts":1793793600000,"req_id":"req_82284e64","conv":"263a0003f8e8","turn_id":"turn_4a363b708499","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"6bd3aec1","ts":1793793600000,"conv":"263a0003f8e8","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"6bd3aec1","ts":1793793600000,"conv":"263a0003f8e8","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":123,"bytes_after":123,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":74,"turn_clipped":false,"prompt_bytes":546}
+# Subtest: 4. legacy empty email upgraded to named email under same darwin who stays on the same live turn
+not ok 4 - 4. legacy empty email upgraded to named email under same darwin who stays on the same live turn
+  ---
+  duration_ms: 94.029247
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:336:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    null !== 'tool_use'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'tool_use'
+  actual: ~
+  operator: 'strictEqual'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:373:12
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:341:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f2734ee6","ts":1793793600000,"conv":"db9b0b7ce7af","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: 5. turn.continuing protects the live turn during await proc.updateTools against moved-on and LRU eviction
+not ok 5 - 5. turn.continuing protects the live turn during await proc.updateTools against moved-on and LRU eviction
+  ---
+  duration_ms: 2059.96875
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:392:1'
+  failureType: 'testCodeFailure'
+  error: 'timed out waiting for test condition'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    waitUntil (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:54:38)
+    async file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:433:5
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:393:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ad5d099a","ts":1793793600000,"conv":"4b0dbf8b3227","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"ad5d099a","ts":1793793610000,"req_id":"req_1859f0bb","conv":"4b0dbf8b3227","turn_id":"turn_25e60646925a","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":10000,"client_idle_ms":10000,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ad5d099a","ts":1793793610000,"conv":"4b0dbf8b3227","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ad5d099a","ts":1793793610000,"conv":"4b0dbf8b3227","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":111,"bytes_after":111,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":78,"turn_clipped":false,"prompt_bytes":538}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ad5d099a","ts":1793793610000,"conv":"4b0dbf8b3227","action":"session_new","reason":"forced","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ad5d099a","ts":1793793610000,"conv":"4b0dbf8b3227","action":"replay","reason":"forced","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":111,"bytes_after":111,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":78,"turn_clipped":false,"prompt_bytes":538}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ad5d099a","ts":1793793610000,"conv":"4b0dbf8b3227","action":"session_new","reason":"history","fresh":false,"resumed":false,"spare":false,"parked":false,"history":4,"first_diff":{"index":3,"from_end":0,"field":"missing_expected","masked":false,"rows":4,"differing_messages":1,"masked_messages":0},"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ad5d099a","ts":1793793610000,"conv":"4b0dbf8b3227","action":"replay","reason":"history","messages_before":4,"messages_after":4,"user_before":1,"user_after":1,"bytes_before":289,"bytes_after":289,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":26,"turn_clipped":false,"prompt_bytes":664}
+# Subtest: 6. pre-aborted retries and C2 requests never advance clocks, mark clientSeen, or swallow abort into 502
+not ok 6 - 6. pre-aborted retries and C2 requests never advance clocks, mark clientSeen, or swallow abort into 502
+  ---
+  duration_ms: 105.416992
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:481:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    200 !== 400
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 400
+  actual: 200
+  operator: 'strictEqual'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:531:12
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:482:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ae5f42b1","ts":1793793600000,"conv":"6766792422cb","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ae5f42b1","ts":1793793600000,"conv":"6766792422cb","action":"prompt","reason":"no_live","ttft_ms":null,"prompt_ms":0}
+# Subtest: 7. deferred C1 without poll waiters delivers via waitLate, seeds lastToolStep on C2, and replays cleanly
+not ok 7 - 7. deferred C1 without poll waiters delivers via waitLate, seeds lastToolStep on C2, and replays cleanly
+  ---
+  duration_ms: 110.020898
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:587:1'
+  failureType: 'testCodeFailure'
+  error: 'expected lastToolStep to be seeded after waitLate delivery'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:626:12
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:588:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"3e4a6a95","ts":1793793600000,"conv":"f9722a49316a","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"3e4a6a95","ts":1793793600000,"req_id":"req_0cff319f","conv":"f9722a49316a","turn_id":"turn_16b31ef3e07c","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":6,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":3,"field":"missing_actual","masked":false,"rows":6,"differing_messages":4,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"3e4a6a95","ts":1793793600000,"conv":"f9722a49316a","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"3e4a6a95","ts":1793793600000,"conv":"f9722a49316a","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":110,"bytes_after":110,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":80,"turn_clipped":false,"prompt_bytes":539}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"3e4a6a95","ts":1793793600000,"conv":"f9722a49316a","action":"prompt","reason":"history_mismatch","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"0a5c9d69","ts":1793793600000,"conv":"238cddd166e5","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"0a5c9d69","ts":1793793600000,"req_id":"req_ba1ce459","conv":"238cddd166e5","turn_id":"turn_8d088d76e772","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"0a5c9d69","ts":1793793600000,"conv":"238cddd166e5","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"0a5c9d69","ts":1793793600000,"conv":"238cddd166e5","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":118,"bytes_after":118,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":74,"turn_clipped":false,"prompt_bytes":541}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"0a5c9d69","ts":1793793600000,"conv":"238cddd166e5","action":"prompt","reason":"history_mismatch","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"55225a6e","ts":1793793600000,"conv":"3dcd633eb326","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"55225a6e","ts":1793793600000,"req_id":"req_879759f2","conv":"3dcd633eb326","turn_id":"turn_94ba4797c801","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":true,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"55225a6e","ts":1793793600000,"conv":"3dcd633eb326","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"55225a6e","ts":1793793600000,"conv":"3dcd633eb326","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":110,"bytes_after":110,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":74,"turn_clipped":false,"prompt_bytes":533}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"55225a6e","ts":1793793600000,"conv":"3dcd633eb326","action":"prompt","reason":"history_mismatch","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"508d179e","ts":1793793600000,"conv":"fbcb212cb2dd","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"508d179e","ts":1793793600000,"req_id":"req_6a47943b","conv":"fbcb212cb2dd","turn_id":"turn_94d55aeee16a","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"508d179e","ts":1793793600000,"conv":"fbcb212cb2dd","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"508d179e","ts":1793793600000,"conv":"fbcb212cb2dd","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":110,"bytes_after":110,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":74,"turn_clipped":false,"prompt_bytes":533}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"508d179e","ts":1793793600000,"conv":"fbcb212cb2dd","action":"prompt","reason":"history_mismatch","ttft_ms":0,"prompt_ms":0}
+# Subtest: 8. candidate 409 beats 400 and steer/drop, and mutated config or advanced step never replays stale C2
+ok 8 - 8. candidate 409 beats 400 and steer/drop, and mutated config or advanced step never replays stale C2
+  ---
+  duration_ms: 424.313827
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"6094d175","ts":1793793600000,"conv":"ae6f51742496","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"6094d175","ts":1793793635000,"req_id":"req_8a240ce9","conv":"ae6f51742496","turn_id":"turn_9c6327cdd24b","action":"superseded","reason":"lineage_fork","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":35000,"client_idle_ms":35000,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"superseded_turn_id":"turn_9c6327cdd24b"}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"6094d175","ts":1793793635000,"conv":"ae6f51742496","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: 9. renamed tool_use_id with a single cross-user candidate in the same account never binds to user A's live turn
+not ok 9 - 9. renamed tool_use_id with a single cross-user candidate in the same account never binds to user A's live turn
+  ---
+  duration_ms: 96.18789
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:768:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(procA)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:816:12
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:773:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"afe15496","ts":1793793600000,"conv":"95ed62b50bb2","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: 10. cold-start default account without metadata.email binds consistent account partition on first turn
+not ok 10 - 10. cold-start default account without metadata.email binds consistent account partition on first turn
+  ---
+  duration_ms: 56.141969
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:848:1'
+  failureType: 'testCodeFailure'
+  error: 'first turn must bind resolved who partition'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'match'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:872:12
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:849:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ab576330","ts":1793793600000,"conv":"c7bd2ef3d171","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ab576330","ts":1793793600000,"conv":"c7bd2ef3d171","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: 11. default-account switch never adopts another account's warmed spare
+not ok 11 - 11. default-account switch never adopts another account's warmed spare
+  ---
+  duration_ms: 35.345407
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/tool-step-retry.mjs:899:1'
+  failureType: 'testCodeFailure'
+  error: 'The "string" argument must be of type string. Received type undefined (undefined)'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'match'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:922:12
+    async withKit (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:25:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/tool-step-retry.mjs:905:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 1
+# fail 10
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 17664.508177
+EXIT:1

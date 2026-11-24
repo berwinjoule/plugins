@@ -1,0 +1,141 @@
+TAP version 13
+# (node:3899) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"04470d68","ts":1793793600000,"conv":"85ce97fcb2d3","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"04470d68","ts":1793793600000,"req_id":"req_9a8ba549","conv":"85ce97fcb2d3","turn_id":"turn_5bb4d2b08426","action":"replay_tool_step","reason":"idempotent_retry","attached":false,"done":false,"dead":false,"pending":2,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":1,"layout":"hoisted","nonstream":false,"calls":2}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"04470d68","ts":1793793600000,"req_id":"req_599b68fa","conv":"85ce97fcb2d3","turn_id":"turn_5bb4d2b08426","action":"replay_tool_step","reason":"idempotent_retry","attached":false,"done":false,"dead":false,"pending":2,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":1,"layout":"hoisted","nonstream":true,"calls":2}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"04470d68","ts":1793793600000,"conv":"85ce97fcb2d3","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: 1. Linux default account with companion note and deferred parallel calls replays identically via SSE and non-stream
+ok 1 - 1. Linux default account with companion note and deferred parallel calls replays identically via SSE and non-stream
+  ---
+  duration_ms: 152.295528
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"81e4178e","ts":1793793600000,"conv":"a11b4a3be9e0","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"81e4178e","ts":1793793635000,"conv":"6a1d3f18ba46","action":"session_new","reason":"no_live","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"81e4178e","ts":1793793635000,"conv":"6a1d3f18ba46","action":"replay","reason":"no_live","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":108,"bytes_after":108,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":78,"turn_clipped":false,"prompt_bytes":535}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"81e4178e","ts":1793793635000,"conv":"6a1d3f18ba46","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"81e4178e","ts":1793793670000,"conv":"a11b4a3be9e0","action":"prompt","reason":"no_live","ttft_ms":70000,"prompt_ms":70000}
+# Subtest: 2. switching default darwin keyring account A to B isolates pools without dropping A's live turn
+ok 2 - 2. switching default darwin keyring account A to B isolates pools without dropping A's live turn
+  ---
+  duration_ms: 101.724784
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"92cf70c4","ts":1793793600000,"conv":"533d881f71ce","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"92cf70c4","ts":1793793605000,"conv":"49c40c0755d6","action":"session_new","reason":"no_live","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"92cf70c4","ts":1793793605000,"conv":"49c40c0755d6","action":"replay","reason":"no_live","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":109,"bytes_after":109,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":80,"turn_clipped":false,"prompt_bytes":538}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"92cf70c4","ts":1793793605000,"conv":"49c40c0755d6","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"92cf70c4","ts":1793793605000,"conv":"49c40c0755d6","action":"session_new","reason":"forced","fresh":false,"resumed":false,"spare":false,"parked":false,"history":4,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"92cf70c4","ts":1793793605000,"conv":"49c40c0755d6","action":"replay","reason":"forced","messages_before":4,"messages_after":4,"user_before":1,"user_after":1,"bytes_before":285,"bytes_after":285,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":85,"turn_clipped":false,"prompt_bytes":719}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"92cf70c4","ts":1793793605000,"conv":"49c40c0755d6","action":"prompt","reason":"forced","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"92cf70c4","ts":1793793605000,"conv":"533d881f71ce","action":"prompt","reason":"no_live","ttft_ms":5000,"prompt_ms":5000}
+# Subtest: 3. another user_id sending A's direct C1 or direct C2 never touches A's live turn
+ok 3 - 3. another user_id sending A's direct C1 or direct C2 never touches A's live turn
+  ---
+  duration_ms: 100.472197
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"dfc63c77","ts":1793793600000,"conv":"4ca587a9a643","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"dfc63c77","ts":1793793600000,"req_id":"req_739b0d63","conv":"4ca587a9a643","turn_id":"turn_4602102cb5d5","action":"replay_tool_step","reason":"idempotent_retry","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"calls":1}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"dfc63c77","ts":1793793600000,"conv":"4ca587a9a643","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: 4. legacy empty email upgraded to named email under same darwin who stays on the same live turn
+ok 4 - 4. legacy empty email upgraded to named email under same darwin who stays on the same live turn
+  ---
+  duration_ms: 96.486526
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"a0c3418f","ts":1793793600000,"conv":"db9b0b7ce7af","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"a0c3418f","ts":1793793600050,"req_id":"req_ed2f73ef","conv":"db9b0b7ce7af","turn_id":"turn_85055e29fed0","action":"reject_active","reason":"continuing","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":50,"client_idle_ms":50,"self_poll_repeats":0,"layout":"hoisted","nonstream":false}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"a0c3418f","ts":1793793600050,"conv":"db9b0b7ce7af","action":"prompt","reason":"no_live","ttft_ms":50,"prompt_ms":50}
+# Subtest: 5. turn.continuing protects the live turn during await proc.updateTools against moved-on and LRU eviction
+ok 5 - 5. turn.continuing protects the live turn during await proc.updateTools against moved-on and LRU eviction
+  ---
+  duration_ms: 67.317089
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"15d380db","ts":1793793600000,"conv":"4b0dbf8b3227","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"15d380db","ts":1793793610000,"req_id":"req_5d00b2b6","conv":"4b0dbf8b3227","turn_id":"turn_30a6258ee494","action":"replay_tool_step","reason":"idempotent_retry","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"calls":1}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"15d380db","ts":1793793610000,"conv":"4b0dbf8b3227","action":"prompt","reason":"no_live","ttft_ms":10000,"prompt_ms":10000}
+# Subtest: 6. pre-aborted retries and C2 requests never advance clocks, mark clientSeen, or swallow abort into 502
+ok 6 - 6. pre-aborted retries and C2 requests never advance clocks, mark clientSeen, or swallow abort into 502
+  ---
+  duration_ms: 96.37264
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"e2a4348f","ts":1793793600000,"conv":"6766792422cb","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"e2a4348f","ts":1793793600000,"conv":"6766792422cb","action":"prompt","reason":"no_live","ttft_ms":null,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"e2a4348f","ts":1793793600000,"req_id":"req_38cf0f9e","conv":"6766792422cb","turn_id":"turn_0ce36d28ee9a","action":"replay_tool_step","reason":"idempotent_retry","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":1,"layout":"hoisted","nonstream":false,"calls":1}
+# Subtest: 7. deferred C1 without poll waiters delivers via waitLate, seeds lastToolStep on C2, and replays cleanly
+ok 7 - 7. deferred C1 without poll waiters delivers via waitLate, seeds lastToolStep on C2, and replays cleanly
+  ---
+  duration_ms: 123.588805
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"fa5e39f1","ts":1793793600000,"conv":"f9722a49316a","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"fa5e39f1","ts":1793793600000,"req_id":"req_6fda5f3d","conv":"f9722a49316a","turn_id":"turn_ea5c709acec2","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":6,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":3,"field":"missing_actual","masked":false,"rows":6,"differing_messages":4,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"fa5e39f1","ts":1793793600000,"conv":"f9722a49316a","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"fa5e39f1","ts":1793793600000,"conv":"f9722a49316a","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":110,"bytes_after":110,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":80,"turn_clipped":false,"prompt_bytes":539}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"fa5e39f1","ts":1793793600000,"conv":"f9722a49316a","action":"prompt","reason":"history_mismatch","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"1b92c434","ts":1793793600000,"conv":"238cddd166e5","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"1b92c434","ts":1793793600000,"req_id":"req_d889a1d1","conv":"238cddd166e5","turn_id":"turn_573fd4fb7f73","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"1b92c434","ts":1793793600000,"conv":"238cddd166e5","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"1b92c434","ts":1793793600000,"conv":"238cddd166e5","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":118,"bytes_after":118,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":74,"turn_clipped":false,"prompt_bytes":541}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"1b92c434","ts":1793793600000,"conv":"238cddd166e5","action":"prompt","reason":"history_mismatch","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"88352135","ts":1793793600000,"conv":"3dcd633eb326","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"88352135","ts":1793793600000,"req_id":"req_9c6600eb","conv":"3dcd633eb326","turn_id":"turn_2ecd3bb97b51","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":true,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"88352135","ts":1793793600000,"conv":"3dcd633eb326","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"88352135","ts":1793793600000,"conv":"3dcd633eb326","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":110,"bytes_after":110,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":74,"turn_clipped":false,"prompt_bytes":533}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"88352135","ts":1793793600000,"conv":"3dcd633eb326","action":"prompt","reason":"history_mismatch","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8f1a8404","ts":1793793600000,"conv":"fbcb212cb2dd","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"8f1a8404","ts":1793793600000,"req_id":"req_aae10135","conv":"fbcb212cb2dd","turn_id":"turn_d62acd5466e1","action":"drop_live","reason":"history_mismatch","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":false,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8f1a8404","ts":1793793600000,"conv":"fbcb212cb2dd","action":"session_new","reason":"history_mismatch","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8f1a8404","ts":1793793600000,"conv":"fbcb212cb2dd","action":"replay","reason":"history_mismatch","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":110,"bytes_after":110,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":74,"turn_clipped":false,"prompt_bytes":533}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8f1a8404","ts":1793793600000,"conv":"fbcb212cb2dd","action":"prompt","reason":"history_mismatch","ttft_ms":0,"prompt_ms":0}
+# Subtest: 8. candidate 409 beats 400 and steer/drop, and mutated config or advanced step never replays stale C2
+ok 8 - 8. candidate 409 beats 400 and steer/drop, and mutated config or advanced step never replays stale C2
+  ---
+  duration_ms: 411.373617
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8ad33c91","ts":1793793600000,"conv":"393b86fb288f","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8ad33c91","ts":1793793635000,"conv":"fa1252535dc0","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8ad33c91","ts":1793793670000,"conv":"68307976d35e","action":"session_new","reason":"no_live","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8ad33c91","ts":1793793670000,"conv":"68307976d35e","action":"replay","reason":"no_live","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":100,"bytes_after":100,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":69,"turn_clipped":false,"prompt_bytes":518}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8ad33c91","ts":1793793670000,"conv":"68307976d35e","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"8ad33c91","ts":1793793670000,"conv":"393b86fb288f","action":"prompt","reason":"no_live","ttft_ms":70000,"prompt_ms":70000}
+# Subtest: 9. renamed tool_use_id with a single cross-user candidate in the same account never binds to user A's live turn
+ok 9 - 9. renamed tool_use_id with a single cross-user candidate in the same account never binds to user A's live turn
+  ---
+  duration_ms: 97.185226
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"c544eab6","ts":1793793600000,"conv":"61671bbcad18","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"c544eab6","ts":1793793600000,"req_id":"req_1555e2dc","conv":"61671bbcad18","turn_id":"turn_79900ad5b821","action":"replay_tool_step","reason":"idempotent_retry","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"calls":1}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"c544eab6","ts":1793793600000,"conv":"61671bbcad18","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: 10. cold-start default account without metadata.email binds consistent account partition on first turn
+ok 10 - 10. cold-start default account without metadata.email binds consistent account partition on first turn
+  ---
+  duration_ms: 91.457706
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f71d8fe2","ts":1793793600000,"conv":"ccecd01cae51","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f71d8fe2","ts":1793793600000,"conv":"ccecd01cae51","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f71d8fe2","ts":1793793635000,"conv":"bcb5a7ef3d8d","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f71d8fe2","ts":1793793635000,"conv":"bcb5a7ef3d8d","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: 11. default-account switch never adopts another account's warmed spare
+ok 11 - 11. default-account switch never adopts another account's warmed spare
+  ---
+  duration_ms: 41.131758
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4429.37925
+EXIT:0
