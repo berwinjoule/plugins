@@ -8,4 +8,6 @@
 
 因此 0.1.116 上的旧候选不能部署，也不能覆盖或回退现在的 0.1.120。本分支用 merge 接上 `e967ba4d`，不 rebase 已有提交，再把重放、raw 身份、`continuing` 占位和 user/home 匹配接到 0.1.120 上。补丁后的 `index.mjs` 哈希必然不同于生产磁盘，`FORK_BUILD.json` 把这一点写成 false。
 
-宿主：Magpie 0.1.4656 的 plugin host 由主进程直管，`magpie.service` `CanReload=no`、`KillMode=control-group`。没有已证实的独立 host reload。最近仍有 attached/pending turn。部署方案不能承诺只重启 host、无会话中断或 OAuth 零刷新。本文件不授权任何生产操作。
+宿主：Magpie 0.1.4656 的 plugin host 由主进程直管，`magpie.service` `CanReload=no`、`KillMode=control-group`。没有已证实的独立 host reload。最近仍有 attached/pending turn。部署方案不能承诺只重启 host、无会话中断或 OAuth 零刷新。磁盘上的文件被换掉，不等于已经 import 的 ESM 模块重新执行。本文件不授权任何生产操作。
+
+`spilledOutput` 只回答当前进程 `sessionId` 对应的 `brain/<session>/.system_generated/steps/<step>/output.txt`。另一个会话、路径逃逸，以及这段相对路径上的符号链接，在打开文件之前返回 null，调用仍交给客户端。同一 home 上的多个用户、同一用户的多个 session 各自只用自己的 session 文件。

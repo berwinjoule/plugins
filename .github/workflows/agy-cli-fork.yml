@@ -25,7 +25,7 @@ jobs:
         run: |
           export HOME="${RUNNER_TEMP}/agy-home"
           mkdir -p "$HOME"
-          bun test --timeout 120000 ./test/owner-acceptance.mjs ./test/duplicate-result-notice.mjs ./test/tool-step-retry.mjs ./test/fork-build-marker.mjs ./test/tool-result-prefill.mjs
+          bun test --timeout 120000 ./test/owner-acceptance.mjs ./test/duplicate-result-notice.mjs ./test/tool-step-retry.mjs ./test/fork-build-marker.mjs ./test/tool-result-prefill.mjs ./test/spilled-output.mjs
           bun test/smoke.mjs
   node-22:
     runs-on: ubuntu-latest
@@ -41,4 +41,4 @@ jobs:
         run: |
           export HOME="${RUNNER_TEMP}/agy-home"
           mkdir -p "$HOME"
-          node --experimental-vm-modules --test --test-timeout 180000 ./test/owner-acceptance.mjs ./test/duplicate-result-notice.mjs ./test/tool-step-retry.mjs ./test/fork-build-marker.mjs ./test/tool-result-prefill.mjs
+          node --experimental-vm-modules --test --test-timeout 180000 ./test/owner-acceptance.mjs ./test/duplicate-result-notice.mjs ./test/tool-step-retry.mjs ./test/fork-build-marker.mjs ./test/tool-result-prefill.mjs ./test/spilled-output.mjs
