@@ -1,0 +1,44 @@
+name: agy-cli fork
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - cursor/**
+
+permissions:
+  contents: read
+
+jobs:
+  bun-1-4-5:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.5
+      - name: production-matched bun regressions
+        working-directory: packages/agy-cli
+        env:
+          AGY_BRIDGE_STORED_SIGNIN: skip
+        run: |
+          export HOME="${RUNNER_TEMP}/agy-home"
+          mkdir -p "$HOME"
+          bun test --timeout 120000 ./test/owner-acceptance.mjs ./test/duplicate-result-notice.mjs ./test/tool-step-retry.mjs ./test/fork-build-marker.mjs ./test/tool-result-prefill.mjs
+          bun test/smoke.mjs
+  node-22:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
+      - name: same regressions on Node
+        working-directory: packages/agy-cli
+        env:
+          AGY_BRIDGE_STORED_SIGNIN: skip
+        run: |
+          export HOME="${RUNNER_TEMP}/agy-home"
+          mkdir -p "$HOME"
+          node --experimental-vm-modules --test --test-timeout 180000 ./test/owner-acceptance.mjs ./test/duplicate-result-notice.mjs ./test/tool-step-retry.mjs ./test/fork-build-marker.mjs ./test/tool-result-prefill.mjs

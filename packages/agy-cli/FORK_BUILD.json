@@ -1,0 +1,29 @@
+{
+  "channel": "berwinjoule-fork",
+  "baseVersion": "0.1.120",
+  "officialVersionClaimed": "0.1.120",
+  "notOfficialRelease": true,
+  "doesNotClaim": "0.1.121",
+  "obsoleteCandidates": ["0.1.116"],
+  "baseCommit": "e967ba4d946071c6c27a51cd5168b12ce832da5c",
+  "productionDiskIndexSha256": "8cc4e0a591efad49e067d0b8231d7ac966c7fba4dd10a727cee6c90b8b3b3868",
+  "publicIndexMatchesReportedProductionDisk": true,
+  "wholeInstalledPackageMatchesProduction": "unknown",
+  "loadedMemoryHash": "unknown",
+  "candidateIndexMatchesProductionDisk": false,
+  "upstreamPatches": [
+    {
+      "pr": 1482,
+      "sha": "358312154acfa22704d89cd81a016ce5a67d45e8",
+      "stateOn0120": "open, not merged; e967ba4d has no rawResultKey"
+    },
+    {
+      "pr": 1513,
+      "shaPorted": "e741e5940be0b6076bb11265479d73c2251aec3f",
+      "earlierSha": "ffc516f3dd8f04d0055e5592972f8392344cc006",
+      "stateOn0120": "open and rebased; replay only. continuing and user/home match are added here"
+    }
+  ],
+  "hostRuntimeReported": "Bun 1.4.5",
+  "notAClaimAboutRunningProcessImage": true
+}
