@@ -5472,19 +5472,23 @@ function matchToolResults(body, blocks, sessionScope = "", userId = "", home = n
   const byID = new Map(calls.map((call, index) => [call.id, index]))
   if (!calls.length || byID.size !== calls.length || calls.some(call => !call.id) ||
     blocks.some(block => !byID.has(block.tool_use_id))) return direct
-  let found = null
+  const candidates = []
   for (const proc of allProcs) {
-    if (!sameToolOwner(proc, sessionScope, userId, home) || !proc.turn || proc.turn.finalized || !proc.matchesHistory(history)) continue
+    // User is not a filter here: two live turns with the same history must
+    // stay ambiguous (503), not collapse to the caller's own turn.
+    if (!sameSessionScope(proc, sessionScope) || (proc.home ?? null) !== (home ?? null) ||
+      !proc.turn || proc.turn.finalized || !proc.matchesHistory(history)) continue
     const shown = lastAssistantCalls(proc.expectedMessages)
     if (shown.length !== calls.length || shown.some((call, index) =>
       call.name !== calls[index].name || stableJSON(call.input ?? {}) !== stableJSON(calls[index].input ?? {}))) continue
     const mapped = blocks.map(block => ({ block, match: toolCalls.get(shown[byID.get(block.tool_use_id)].id) }))
     if (mapped.some((item, index) => direct[index].match && item.match !== direct[index].match)) continue
     if (mapped.some(item => !item.match) || !mapped.some(item => !item.match.call.mcpResponded || (item.match.call.deferred && !item.match.call.result))) continue
-    if (found) throw new BusyError("agy bridge: renamed tool IDs match more than one pending conversation")
-    found = mapped
+    candidates.push(mapped)
   }
-  return found || direct
+  if (candidates.length > 1) throw new BusyError("agy bridge: renamed tool IDs match more than one pending conversation")
+  if (candidates.length === 1 && (candidates[0][0].match.proc.userId || "") === (userId || "")) return candidates[0]
+  return direct
 }
 
 function systemText(body) {
