@@ -4546,11 +4546,28 @@ function movedOnVerdict(turn, messages) {
   return foreign ? { stale: true, reason: "moved_on" } : null
 }
 
+// A retry of a request this session already accepted is a strict prefix of the
+// recorded messages. A compaction or another branch rewrites a message inside
+// that prefix, so its key differs and it is not this. Counts and keys only.
+function staleSnapshot(messages, expected) {
+  if (!Array.isArray(messages) || !Array.isArray(expected)) return false
+  if (messages.length < 1 || messages.length >= expected.length) return false
+  return historyKey(messages) === historyKey(expected.slice(0, messages.length))
+}
+
 // A pending tool turn only owns its own line of history, not a sibling request
 // that continues its base without carrying any of the emitted tool calls.
 function lineageVerdict(proc, turn, opts) {
   if (!turn || turn.attached || turn.cancelRequested || turn.steering || turn.done || turn.finalized) return null
   if (proc.dead || proc.stopping || proc.retiring || !turn.hasPendingMcp()) return null
+  // The same bytes, already behind this turn: busy, and do not replace it.
+  if (staleSnapshot(opts.messages, proc.expectedMessages)) {
+    logBridgeEvent(proc, turn, "reject_stale_snapshot", "prefix", opts, {
+      history: opts.messages.length,
+      expected_history: proc.expectedMessages.length,
+    })
+    return null
+  }
   const history = opts.history
   const base = turn.baseHistory
   if (!Array.isArray(history) || !Array.isArray(base)) return null
@@ -4709,6 +4726,13 @@ async function recoverStaleTurn(ctx) {
     if (problem) {
       logBridgeEvent(current, held, "replay_refused", problem, ctx.acquireOpts)
       return { kind: "incomplete" }
+    }
+    if (!verdict.stale && staleSnapshot(ctx.body?.messages, current.expectedMessages)) {
+      logBridgeEvent(current, held, "reject_stale_snapshot", "prefix", ctx.acquireOpts, {
+        history: Array.isArray(ctx.body?.messages) ? ctx.body.messages.length : null,
+        expected_history: Array.isArray(current.expectedMessages) ? current.expectedMessages.length : null,
+      })
+      return { kind: "active", reason: "stale_snapshot" }
     }
     const reason = verdict.stale ? verdict.reason : "unmatched_results"
     logBridgeEvent(current, held, "reclaim", reason, ctx.acquireOpts)
