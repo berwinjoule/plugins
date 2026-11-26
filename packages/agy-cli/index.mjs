@@ -3895,8 +3895,12 @@ async function acquireProcLocked(agyPath, convKey, opts, isFreshConversation, fo
     }
     if (lineage === "fork" || lineage === "answered") {
       const orphan = existing.turn
-      logBridgeEvent(existing, orphan, "superseded", lineage === "fork" ? "lineage_fork" : "lineage_answered", opts,
-        { superseded_turn_id: orphan.turnId })
+      logBridgeEvent(existing, orphan, "superseded", lineage === "fork" ? "lineage_fork" : "lineage_answered", opts, {
+        superseded_turn_id: orphan.turnId,
+        history: Array.isArray(opts.messages) ? opts.messages.length : null,
+        expected_history: Array.isArray(existing.expectedMessages) ? existing.expectedMessages.length : null,
+        first_diff: firstHistoryDiff(existing.expectedMessages, opts.messages),
+      })
       await reclaimStaleTurn(existing, orphan, SUPERSEDED_NOTE)
       existing = null
     } else if (lineage === "conflict") {
@@ -4147,11 +4151,28 @@ function movedOnVerdict(turn, messages) {
   return foreign ? { stale: true, reason: "moved_on" } : null
 }
 
+// A retry of a request this session already accepted is a strict prefix of the
+// recorded messages. A compaction or another branch rewrites a message inside
+// that prefix, so its key differs and it is not this. Counts and keys only.
+function staleSnapshot(messages, expected) {
+  if (!Array.isArray(messages) || !Array.isArray(expected)) return false
+  if (messages.length < 1 || messages.length >= expected.length) return false
+  return historyKey(messages) === historyKey(expected.slice(0, messages.length))
+}
+
 // A pending tool turn only owns its own line of history, not a sibling request
 // that continues its base without carrying any of the emitted tool calls.
 function lineageVerdict(proc, turn, opts) {
   if (!turn || turn.attached || turn.cancelRequested || turn.steering || turn.continuing || turn.done || turn.finalized) return null
   if (proc.dead || proc.stopping || proc.retiring || !turn.hasPendingMcp()) return null
+  // The same bytes, already behind this turn: busy, and do not replace it.
+  if (staleSnapshot(opts.messages, proc.expectedMessages)) {
+    logBridgeEvent(proc, turn, "reject_stale_snapshot", "prefix", opts, {
+      history: opts.messages.length,
+      expected_history: proc.expectedMessages.length,
+    })
+    return null
+  }
   const history = opts.history
   const base = turn.baseHistory
   if (!Array.isArray(history) || !Array.isArray(base)) return null
@@ -4310,6 +4331,13 @@ async function recoverStaleTurn(ctx) {
     if (problem) {
       logBridgeEvent(current, held, "replay_refused", problem, ctx.acquireOpts)
       return { kind: "incomplete" }
+    }
+    if (!verdict.stale && staleSnapshot(ctx.body?.messages, current.expectedMessages)) {
+      logBridgeEvent(current, held, "reject_stale_snapshot", "prefix", ctx.acquireOpts, {
+        history: Array.isArray(ctx.body?.messages) ? ctx.body.messages.length : null,
+        expected_history: Array.isArray(current.expectedMessages) ? current.expectedMessages.length : null,
+      })
+      return { kind: "active", reason: "stale_snapshot" }
     }
     const reason = verdict.stale ? verdict.reason : "unmatched_results"
     logBridgeEvent(current, held, "reclaim", reason, ctx.acquireOpts)
@@ -5567,6 +5595,30 @@ function compactIdentity(text) {
 
 function sameInstructions(a, b) {
   return instructionsIdentity(a) === instructionsIdentity(b)
+}
+
+// Claude Code's AgentSummary repeats the worker's conversation with the same
+// session and sub-agent headers. The last user text is the progress ask, so
+// it gets a scope of its own and does not take the worker's live turn
+// (plugins#1545, agy-cli 0.1.127). A tool_result that merely contains the
+// same words stays on the worker: only the last block is checked.
+const AGENT_SUMMARY_SCOPE = "\nagent-summary"
+const AGENT_SUMMARY_ASK = "Describe your "
+
+function agentSummaryAsk(body) {
+  const last = body?.messages?.at(-1)
+  if (last?.role !== "user") return false
+  const part = typeof last.content === "string" ? { type: "text", text: last.content } : last.content?.at?.(-1)
+  if (part?.type !== "text" || typeof part.text !== "string") return false
+  const ask = part.text.trim()
+  return ask.startsWith(AGENT_SUMMARY_ASK) && ask.includes(" in 3-5 words")
+}
+
+function requestHeader(fetchInput, init, name) {
+  const headers = new Headers(
+    init?.headers ?? (fetchInput instanceof Request ? fetchInput.headers : undefined) ?? {},
+  )
+  return headers.get(name)?.trim() || ""
 }
 
 // The model is not part of the key: agy switches models inside a live session.
@@ -8196,7 +8248,8 @@ export const AntigravityBridgePlugin = async () => {
             if (isOrchestrator(requestedModel)) return jsonError(400, orchestratorRefusal(requestedModel), undefined, { noRetry: true })
             const model = resolveAgyModel(await loadModelCatalog(agy), requestedModel, body)
             const selection = { model: requestedModel, effort: requestedEffort(body) }
-            const sessionScope = requestSessionScope(fetchInput, init)
+            const sessionScope = requestSessionScope(fetchInput, init) +
+              (requestHeader(fetchInput, init, "x-magpie-subagent") && agentSummaryAsk(body) ? AGENT_SUMMARY_SCOPE : "")
             // an account's conversations are its own: its agy has them
             const callerWorkDir = namedWorkDirectory(body, init)
             const convKey = (home ? `acct:${path.basename(home)}:` : "") + conversationKey(body, sessionScope, callerWorkDir || "")
