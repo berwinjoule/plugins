@@ -1,0 +1,48 @@
+TAP version 13
+# (node:3881) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"4d889f52","ts":1793793600000,"conv":"955a8954c2fd","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"4d889f52","ts":1793793600000,"conv":"955a8954c2fd","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: replaying an unchanged tool_result after system notices were appended passes validation and delivers once
+ok 1 - replaying an unchanged tool_result after system notices were appended passes validation and delivers once
+  ---
+  duration_ms: 129.675019
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ec62ade4","ts":1793793600000,"conv":"902df8b1a660","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_tool_state","host_epoch":"ec62ade4","ts":1793793600000,"req_id":"req_c0d0e99e","conv":"902df8b1a660","turn_id":"turn_4e7aa37e1817","action":"drop_live","reason":"interrupted","attached":false,"done":false,"dead":false,"pending":1,"idle_ms":0,"client_idle_ms":0,"self_poll_repeats":0,"layout":"hoisted","nonstream":false,"history":2,"expected_history":4,"history_matches":false,"tools_grew":false,"work_dir_changed":false,"instructions_changed":true,"first_diff":{"index":2,"from_end":1,"field":"missing_actual","masked":false,"rows":4,"differing_messages":2,"masked_messages":0}}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ec62ade4","ts":1793793600000,"conv":"a8cc78aa1058","action":"session_new","reason":"interrupted","fresh":false,"resumed":false,"spare":false,"parked":false,"history":2,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ec62ade4","ts":1793793600000,"conv":"a8cc78aa1058","action":"replay","reason":"interrupted","messages_before":2,"messages_after":2,"user_before":1,"user_after":1,"bytes_before":101,"bytes_after":101,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":101,"head_clipped":false,"turn_bytes":149,"turn_clipped":false,"prompt_bytes":615}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"ec62ade4","ts":1793793600000,"conv":"a8cc78aa1058","action":"prompt","reason":"interrupted","ttft_ms":0,"prompt_ms":0}
+# Subtest: auto-compaction replaying an unchanged tool_result with system notices does not return 409
+ok 2 - auto-compaction replaying an unchanged tool_result with system notices does not return 409
+  ---
+  duration_ms: 102.398406
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f0ebefd0","ts":1793793600000,"conv":"a6e11d7f060f","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"f0ebefd0","ts":1793793600000,"conv":"a6e11d7f060f","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: same-batch equal tool_result blocks followed by a notice deliver once and retain the notice
+ok 3 - same-batch equal tool_result blocks followed by a notice deliver once and retain the notice
+  ---
+  duration_ms: 62.761855
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"beae0bfc","ts":1793793600000,"conv":"7648e8af7c81","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"beae0bfc","ts":1793793600000,"conv":"7648e8af7c81","action":"prompt","reason":"no_live","ttft_ms":null,"prompt_ms":0}
+# Subtest: deferred tool_result enriched with a notice compares by raw key on replay
+ok 4 - deferred tool_result enriched with a notice compares by raw key on replay
+  ---
+  duration_ms: 130.081046
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3468.702761
+EXIT:0

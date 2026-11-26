@@ -1,0 +1,53 @@
+TAP version 13
+# (node:3942) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"9118f995","ts":1793793600000,"conv":"d904dc3117f4","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: split concurrent tool results commit only the accepted request
+not ok 1 - split concurrent tool results commit only the accepted request
+  ---
+  duration_ms: 95.509795
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/owner-acceptance.mjs:90:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    rejected continuation committed its tool result
+    + actual - expected
+    
+    + {
+    +   content: [
+    +     {
+    +       text: 'result-b',
+    +       type: 'text'
+    +     }
+    +   ],
+    +   isError: false
+    + }
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual:
+    content:
+      0:
+        type: 'text'
+        text: 'result-b'
+    isError: false
+  operator: 'strictEqual'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:113:16
+    async withKit (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:24:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:91:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3138.056586
+EXIT:1

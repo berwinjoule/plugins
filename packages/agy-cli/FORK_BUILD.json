@@ -1,0 +1,25 @@
+{
+  "channel": "berwinjoule-fork",
+  "baseVersion": "0.1.139",
+  "officialVersionClaimed": "0.1.139",
+  "npmVersion": "0.1.139-fork.1",
+  "notOfficialRelease": true,
+  "doesNotClaim": "0.1.140",
+  "obsoleteCandidates": ["0.1.116", "0.1.120", "0.1.121-fork.1", "0.1.134-fork.1"],
+  "baseCommit": "5d9c08fca0d34472f032a3555e7ed30d06ff81dc",
+  "productionPin": "4d273930f15aeb24042c18e1bdc5d914344e3f70",
+  "productionPinTag": "prod-vps-agy-cli-4d273930-20261125",
+  "productionDiskIndexSha256": "8cc4e0a591efad49e067d0b8231d7ac966c7fba4dd10a727cee6c90b8b3b3868",
+  "publicIndexMatchesReportedProductionDisk": false,
+  "wholeInstalledPackageMatchesProduction": "unknown",
+  "loadedMemoryHash": "unknown",
+  "candidateIndexMatchesProductionDisk": false,
+  "alreadyUpstreamOnBase": [
+    "raw tool-result identity (0.1.129)",
+    "identical tool_result step replay (0.1.131)",
+    "AgentSummary scope (0.1.127)",
+    "cross-account sameAccount (0.1.133)"
+  ],
+  "hostRuntimeReported": "Bun 1.4.5",
+  "notAClaimAboutRunningProcessImage": true
+}

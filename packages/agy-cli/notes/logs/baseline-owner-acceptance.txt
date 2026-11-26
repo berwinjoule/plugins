@@ -1,0 +1,196 @@
+TAP version 13
+# (node:3829) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"b5bc8814","ts":1793793600000,"conv":"d904dc3117f4","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: split concurrent tool results commit only the accepted request
+not ok 1 - split concurrent tool results commit only the accepted request
+  ---
+  duration_ms: 96.383158
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/owner-acceptance.mjs:90:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    rejected continuation committed its tool result
+    + actual - expected
+    
+    + {
+    +   content: [
+    +     {
+    +       text: 'result-b',
+    +       type: 'text'
+    +     }
+    +   ],
+    +   isError: false
+    + }
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual:
+    content:
+      0:
+        type: 'text'
+        text: 'result-b'
+    isError: false
+  operator: 'strictEqual'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:113:16
+    async withKit (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:24:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:91:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"834c938f","ts":1793793600000,"conv":"d2b6297b84d8","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: identical retry after message_stop replays the same tool step with zero usage
+not ok 2 - identical retry after message_stop replays the same tool step with zero usage
+  ---
+  duration_ms: 94.881309
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/owner-acceptance.mjs:126:1'
+  failureType: 'testCodeFailure'
+  error: 'HTTP 409: {"type":"error","error":{"type":"api_error","message":"agy bridge: conflicting duplicate result for toolu_9bfb742495184cc8904c95b1"}}'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    readSse (file:///workspace/packages/agy-cli/test/testkit.mjs:730:38)
+    async file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:149:20
+    async withKit (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:24:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:127:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"50b62315","ts":1793793600000,"conv":"7553e8726695","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: abort during updateTools does not commit
+not ok 3 - abort during updateTools does not commit
+  ---
+  duration_ms: 61.5203
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/owner-acceptance.mjs:164:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    aborted updateTools still committed
+    + actual - expected
+    
+    + {
+    +   content: [
+    +     {
+    +       text: 'ABORT-RESULT',
+    +       type: 'text'
+    +     }
+    +   ],
+    +   isError: false
+    + }
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual:
+    content:
+      0:
+        type: 'text'
+        text: 'ABORT-RESULT'
+    isError: false
+  operator: 'strictEqual'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:191:12
+    async withKit (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:24:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:165:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"a127effd","ts":1793793600000,"conv":"2a5ec2b35126","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: owner retirement during updateTools does not commit
+not ok 4 - owner retirement during updateTools does not commit
+  ---
+  duration_ms: 60.798636
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/owner-acceptance.mjs:196:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    200 !== 503
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 503
+  actual: 200
+  operator: 'strictEqual'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:220:12
+    async withKit (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:24:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:197:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"2a8177f8","ts":1793793600000,"conv":"3dce2eae6a0c","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: another user cannot commit the selected owner's tool while that owner is accepting
+not ok 5 - another user cannot commit the selected owner's tool while that owner is accepting
+  ---
+  duration_ms: 63.954675
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/owner-acceptance.mjs:227:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    other user committed the owner tool during updateTools
+    + actual - expected
+    
+    + {
+    +   content: [
+    +     {
+    +       text: 'INTRUDER-RESULT',
+    +       type: 'text'
+    +     }
+    +   ],
+    +   isError: false
+    + }
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual:
+    content:
+      0:
+        type: 'text'
+        text: 'INTRUDER-RESULT'
+    isError: false
+  operator: 'strictEqual'
+  stack: |-
+    file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:271:12
+    async withKit (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:24:12)
+    async TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/owner-acceptance.mjs:228:3)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"aa3abf75","ts":1793793600000,"conv":"d5534e21f69f","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"aa3abf75","ts":1793793600000,"conv":"0154ad1ae024","action":"session_new","reason":"no_live","fresh":false,"resumed":false,"spare":false,"parked":false,"history":4,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"aa3abf75","ts":1793793600000,"conv":"0154ad1ae024","action":"replay","reason":"no_live","messages_before":4,"messages_after":4,"user_before":1,"user_after":1,"bytes_before":288,"bytes_after":288,"clipped":0,"last_user_index":[0],"last_user_kept":[true],"last_user_whole":[true],"head_bytes":85,"head_clipped":false,"turn_bytes":82,"turn_clipped":false,"prompt_bytes":719}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"aa3abf75","ts":1793793600000,"conv":"d5534e21f69f","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: a changed tool_result is a real 409 and a different scope cannot commit the owner
+ok 6 - a changed tool_result is a real 409 and a different scope cannot commit the owner
+  ---
+  duration_ms: 92.695227
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"9362d80a","ts":1793793600000,"conv":"c7fa3ce1eb75","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"9362d80a","ts":1793793600000,"conv":"c7fa3ce1eb75","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"9362d80a","ts":1793793600000,"conv":"8dc99a57dfa9","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"9362d80a","ts":1793793600000,"conv":"8dc99a57dfa9","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: two legitimate branches proceed in parallel
+ok 7 - two legitimate branches proceed in parallel
+  ---
+  duration_ms: 29.717215
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 2
+# fail 5
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3549.313384
+EXIT:1

@@ -1,0 +1,91 @@
+TAP version 13
+# (node:3410) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"40e66e7c","ts":1793793600000,"conv":"955a8954c2fd","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: replaying an unchanged tool_result after system notices were appended passes validation and delivers once
+not ok 1 - replaying an unchanged tool_result after system notices were appended passes validation and delivers once
+  ---
+  duration_ms: 133.825884
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/duplicate-result-notice.mjs:18:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"type":"error","error":{"type":"api_error","message":"agy bridge: conflicting duplicate result for toolu_c086a95a97834c08a8e69789"}}
+    
+    409 !== 200
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 200
+  actual: 409
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/duplicate-result-notice.mjs:74:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"bc63e39c","ts":1793793600000,"conv":"902df8b1a660","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# Subtest: auto-compaction replaying an unchanged tool_result with system notices does not return 409
+not ok 2 - auto-compaction replaying an unchanged tool_result with system notices does not return 409
+  ---
+  duration_ms: 93.180847
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/duplicate-result-notice.mjs:86:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"type":"error","error":{"type":"api_error","message":"agy bridge: conflicting duplicate result for toolu_39fb66b1082445339f04aeff"}}
+    
+    409 !== 200
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 200
+  actual: 409
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/duplicate-result-notice.mjs:130:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"b22a577c","ts":1793793600000,"conv":"a6e11d7f060f","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"b22a577c","ts":1793793600000,"conv":"a6e11d7f060f","action":"prompt","reason":"no_live","ttft_ms":0,"prompt_ms":0}
+# Subtest: same-batch equal tool_result blocks followed by a notice deliver once and retain the notice
+ok 3 - same-batch equal tool_result blocks followed by a notice deliver once and retain the notice
+  ---
+  duration_ms: 63.082961
+  type: 'test'
+  ...
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"9f8ce187","ts":1793793600000,"conv":"7648e8af7c81","action":"session_new","reason":"no_live","fresh":true,"resumed":false,"spare":false,"parked":false,"history":0,"initialize_ms":0,"session_ms":0,"set_model_ms":0}
+# [agy-bridge] {"event":"agy_bridge_session","host_epoch":"9f8ce187","ts":1793793600000,"conv":"7648e8af7c81","action":"prompt","reason":"no_live","ttft_ms":null,"prompt_ms":0}
+# Subtest: deferred tool_result enriched with a notice compares by raw key on replay
+not ok 4 - deferred tool_result enriched with a notice compares by raw key on replay
+  ---
+  duration_ms: 122.856354
+  type: 'test'
+  location: '/workspace/packages/agy-cli/test/duplicate-result-notice.mjs:182:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"type":"error","error":{"type":"api_error","message":"agy bridge: conflicting duplicate result for toolu_75e892ed5cc74367871bd58d"}}
+    
+    409 !== 200
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 200
+  actual: 409
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///workspace/packages/agy-cli/test/duplicate-result-notice.mjs:235:12)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 1
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3460.447747
+EXIT:1
