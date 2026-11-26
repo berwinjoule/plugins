@@ -1,6 +1,6 @@
 {
   "name": "@magpie-community/opencode-agy-cli-auth",
-  "version": "0.1.120",
+  "version": "0.1.121-fork.1",
   "description": "Magpie/OpenCode model provider that connects your local agy CLI through the Agent Client Protocol (agy acp), so Antigravity subscription models run through the real CLI",
   "type": "module",
   "main": "./opencode.mjs",
@@ -59,6 +59,7 @@
     "forkBuild": {
       "channel": "berwinjoule-fork",
       "baseVersion": "0.1.120",
+      "npmVersion": "0.1.121-fork.1",
       "notOfficialRelease": true
     }
   }

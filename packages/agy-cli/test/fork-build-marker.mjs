@@ -6,12 +6,18 @@ import { fileURLToPath } from "node:url"
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..")
 
-test("fork build stays on 0.1.120 and does not claim the production disk bytes", () => {
+test("fork build publishes 0.1.121-fork.1 and does not claim official 0.1.121 or the production disk bytes", () => {
   const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"))
   const mark = JSON.parse(readFileSync(path.join(root, "FORK_BUILD.json"), "utf8"))
-  assert.equal(pkg.version, "0.1.120")
+  assert.equal(pkg.version, "0.1.121-fork.1")
+  assert.notEqual(pkg.version, "0.1.121")
   assert.equal(pkg.magpie.forkBuild.baseVersion, "0.1.120")
+  assert.equal(pkg.magpie.forkBuild.npmVersion, "0.1.121-fork.1")
   assert.equal(pkg.magpie.forkBuild.notOfficialRelease, true)
+  assert.equal(mark.officialVersionClaimed, "0.1.120")
+  assert.equal(mark.npmVersion, "0.1.121-fork.1")
+  assert.equal(mark.notOfficialRelease, true)
+  assert.equal(mark.doesNotClaim, "0.1.121")
   assert.equal(mark.baseCommit, "e967ba4d946071c6c27a51cd5168b12ce832da5c")
   assert.equal(mark.publicIndexMatchesReportedProductionDisk, true)
   assert.equal(mark.candidateIndexMatchesProductionDisk, false)

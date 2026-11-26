@@ -7577,9 +7577,14 @@ function makeAnthropicStream(proc, turn, body, msgId, signal, step = turn.regist
             turn.rawUsage = event.result.usage ?? turn.rawUsage
             const usage = await settleUsage(proc, turn, step, responseContent, event.result)
             if (finished) return
-            stopMessage(STOP_REASONS[event.result.stopReason] || "end_turn", usage, true, event.result.stopReason !== "cancelled")
+            const stopReason = STOP_REASONS[event.result.stopReason] || "end_turn"
+            const calibrate = event.result.stopReason !== "cancelled"
+            // Record the reply and release the turn before message_stop, so a
+            // follow-up cannot observe this response as still unfinished.
+            turn.recordResponseUsage(step, usage, true, calibrate)
             proc.recordAssistantResponse(turn, responseContent)
             proc.finalizeTurn(turn)
+            stopMessage(stopReason, usage, true, calibrate)
             detach()
             controller.close()
             return

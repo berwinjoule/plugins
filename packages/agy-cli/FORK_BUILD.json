@@ -2,6 +2,7 @@
   "channel": "berwinjoule-fork",
   "baseVersion": "0.1.120",
   "officialVersionClaimed": "0.1.120",
+  "npmVersion": "0.1.121-fork.1",
   "notOfficialRelease": true,
   "doesNotClaim": "0.1.121",
   "obsoleteCandidates": ["0.1.116"],

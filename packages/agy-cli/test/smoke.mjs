@@ -1075,15 +1075,25 @@ async function launchedModel(body) {
 {
   const before = inits().length
   const shared = { model, messages: [{ role: "user", content: "SAME opening" }] }
-  const firstA = (await readSSE(await callFetch(shared))).events
+  const firstRes = await callFetch(shared)
+  const firstA = (await readSSE(firstRes)).events
   const convA = inits().at(-1).convId
-  await readSSE(await callFetch(shared))
+  let secondRes = await callFetch(shared)
+  // A duplicate opening that still sees the finished turn is busy for one
+  // beat. Draining that 503 and retrying must take its own session.
+  if (secondRes.status === 503) {
+    await secondRes.text().catch(() => {})
+    secondRes = await callFetch(shared)
+  }
+  await readSSE(secondRes)
   const convB = inits().at(-1).convId
   const secondA = nextTurn(shared, firstA, "second turn for A")
-  await readSSE(await callFetch(secondA))
+  const thirdRes = await callFetch(secondA)
+  await readSSE(thirdRes)
   const replay = lastOf("user").text
-  check("same-opening conversations replay their own history", replay.includes("<conversation_history>") && replay.includes(convA) && !replay.includes(convB), replay)
-  check("same-opening conversations do not share a live session", inits().length === before + 3)
+  const detail = `statuses ${firstRes.status},${secondRes.status},${thirdRes.status}; inits ${before}->${inits().length}; conv ${convA} ${convB}; ${replay}`
+  check("same-opening conversations replay their own history", replay.includes("<conversation_history>") && replay.includes(convA) && !replay.includes(convB), detail)
+  check("same-opening conversations do not share a live session", inits().length === before + 3, detail)
 }
 
 {
