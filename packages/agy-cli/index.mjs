@@ -1950,6 +1950,9 @@ class Turn {
     this.finalized = false
     this.cancelRequested = false
     this.steering = false
+    // Set around await updateTools, before streamResponse attaches. A second
+    // request in that window is busy and must not evict or replace this turn.
+    this.continuing = false
     this.stepSeq = 0
     this.lastToolStep = null
     this.promptInFlight = false
@@ -3591,7 +3594,7 @@ class Proc {
     const last = turn?.lastToolStep
     if (!last) return null
     if (this.dead || this.stopping || this.retiring || this.turn !== turn) return null
-    if (turn.done || turn.finalized || turn.attached || turn.steering || turn.cancelRequested) return null
+    if (turn.done || turn.finalized || turn.attached || turn.steering || turn.continuing || turn.cancelRequested) return null
     if (staleTurnVerdict(this, turn).stale) return null
     if (!Array.isArray(this.expectedMessages) || this.expectedMessages.length !== last.expectedLength) return null
     if (!sameSessionScope(this, req.sessionScope)) return null
@@ -4121,7 +4124,7 @@ async function evictLRU() {
   let victim = null
   for (const proc of pool.values()) {
     const turn = proc.turn
-    if (proc.retiring || !turn || turn.attached || turn.cancelRequested || turn.steering) continue
+    if (proc.retiring || !turn || turn.attached || turn.cancelRequested || turn.steering || turn.continuing) continue
     const since = turn.clientProgressAt ?? turn.lastProgressAt
     if (!staleTurnVerdict(proc, turn, now).stale && now - since < bound) continue
     if (!victim || since < victim.since) victim = { proc, turn, since }
@@ -4515,6 +4518,7 @@ function staleTurnVerdict(proc, turn, now = Date.now()) {
   if (!turn || turn.cancelRequested) return { stale: false, reason: "cancelling" }
   if (turn.attached) return { stale: false, reason: "attached" }
   if (turn.steering) return { stale: false, reason: "steering" }
+  if (turn.continuing) return { stale: false, reason: "continuing" }
   if (turn.finalized) return { stale: true, reason: "finalized" }
   if (proc.dead || proc.stopping) return { stale: true, reason: "dead" }
   if (turn.done) return { stale: true, reason: "done" }
@@ -4532,7 +4536,7 @@ function staleTurnVerdict(proc, turn, now = Date.now()) {
 // request can answer the held turn, so waiting for three unmatched requests
 // before replaying only costs the client two 409s.
 function movedOnVerdict(turn, messages) {
-  if (!turn || turn.attached || turn.steering || turn.cancelRequested || !Array.isArray(messages)) return null
+  if (!turn || turn.attached || turn.steering || turn.continuing || turn.cancelRequested || !Array.isArray(messages)) return null
   if (!pendingCallCount(turn)) return null
   const own = new Set(turn.calls.map((call) => call.id))
   let last = -1
@@ -4558,7 +4562,7 @@ function staleSnapshot(messages, expected) {
 // A pending tool turn only owns its own line of history, not a sibling request
 // that continues its base without carrying any of the emitted tool calls.
 function lineageVerdict(proc, turn, opts) {
-  if (!turn || turn.attached || turn.cancelRequested || turn.steering || turn.done || turn.finalized) return null
+  if (!turn || turn.attached || turn.cancelRequested || turn.steering || turn.continuing || turn.done || turn.finalized) return null
   if (proc.dead || proc.stopping || proc.retiring || !turn.hasPendingMcp()) return null
   // The same bytes, already behind this turn: busy, and do not replace it.
   if (staleSnapshot(opts.messages, proc.expectedMessages)) {
@@ -4718,7 +4722,7 @@ async function recoverStaleTurn(ctx) {
       return { kind: "active", reason: "replaced" }
     }
     const verdict = movedOnVerdict(held, ctx.body?.messages) ?? staleTurnVerdict(current, held)
-    if (!verdict.stale && (verdict.reason === "attached" || verdict.reason === "steering")) {
+    if (!verdict.stale && (verdict.reason === "attached" || verdict.reason === "steering" || verdict.reason === "continuing")) {
       logBridgeEvent(current, held, "reject_active", verdict.reason, ctx.acquireOpts)
       return { kind: "active", reason: verdict.reason }
     }
@@ -9275,7 +9279,7 @@ export const AntigravityBridgePlugin = async () => {
                     return jsonError(409, "agy bridge: tool results from different conversations cannot be combined")
                   }
                   if (proc.turn !== turn) return jsonError(409, "agy bridge: the tool response has already completed")
-                  if (turn.attached) throw new BusyError("agy bridge: this conversation already has an active response")
+                  if (turn.attached || turn.continuing) throw new BusyError("agy bridge: this conversation already has an active response")
                   if (turn.steering) throw new BusyError("agy bridge: this conversation is already steering this tool turn")
                   // Notices appended by inspectToolTurn belong in call.result for
                   // agy, while duplicate checks compare the raw tool_result (#1475).
@@ -9392,20 +9396,39 @@ export const AntigravityBridgePlugin = async () => {
                   } else {
                     let toolResultStep = null
                     if (!proc.dead && !turn.done) {
-                      // A tool catalog that lost or changed tools applies to the
-                      // rest of this turn; a model change applies from the next prompt.
-                      await proc.updateTools(tools)
-                      const delivered = proc.continueWith(results)
-                      if (delivered > 0) {
-                        proc.recordToolResults(turn, body.messages)
-                        if (directIdsMatch && requestDigest) {
-                          toolResultStep = {
-                            stepSeq: turn.stepSeq,
-                            callIds: matches.map((item) => item.block.tool_use_id),
-                            requestDigest,
-                            wireModel: body.model,
+                      // Set before the await. streamResponse attaches only after
+                      // this returns, so continuing is the only busy flag in between.
+                      turn.continuing = true
+                      try {
+                        // A tool catalog that lost or changed tools applies to the
+                        // rest of this turn; a model change applies from the next prompt.
+                        await proc.updateTools(tools)
+                        if (init.signal?.aborted) {
+                          const aborted = new ReadableStream({
+                            start(controller) { controller.error(init.signal.reason || new Error("request aborted")) },
+                          })
+                          if (body.stream === false) return jsonResponseFromStream(aborted, body.model, "msg_aborted")
+                          return new Response(aborted, { status: 200, headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } })
+                        }
+                        if (proc.turn !== turn || proc.stopping || proc.retiring || turn.finalized ||
+                          turn.cancelRequested || turn.attached || turn.steering) {
+                          throw new BusyError("agy bridge: the tool turn is no longer accepting results")
+                        }
+                        const delivered = proc.continueWith(results)
+                        if (delivered > 0) {
+                          proc.recordToolResults(turn, body.messages)
+                          if (directIdsMatch && requestDigest) {
+                            toolResultStep = {
+                              stepSeq: turn.stepSeq,
+                              callIds: matches.map((item) => item.block.tool_use_id),
+                              requestDigest,
+                              wireModel: body.model,
+                            }
                           }
                         }
+                        return streamResponse(proc, turn, body, init.signal, toolResultStep)
+                      } finally {
+                        turn.continuing = false
                       }
                     }
                     return streamResponse(proc, turn, body, init.signal, toolResultStep)
@@ -9424,7 +9447,7 @@ export const AntigravityBridgePlugin = async () => {
                   // a round the request itself can't replay is refused, with
                   // a 400 that stops retries and leaves the held turn alone.
                   const verdict = movedOnVerdict(held.turn, body.messages) ?? staleTurnVerdict(held, held.turn)
-                  if (!verdict.stale && (verdict.reason === "attached" || verdict.reason === "steering")) {
+                  if (!verdict.stale && (verdict.reason === "attached" || verdict.reason === "steering" || verdict.reason === "continuing")) {
                     logBridgeEvent(held, held.turn, "reject_active", verdict.reason, acquireOpts)
                     throw new BusyError(verdict.reason === "steering"
                       ? "agy bridge: this conversation is already steering this tool turn"
