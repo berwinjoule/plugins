@@ -3420,7 +3420,7 @@ class Proc {
     if (!args || typeof args !== "object" || Array.isArray(args)) throw new Error("agy bridge: invalid tool arguments")
     const tool = this.tools.find((item) => item.name === name)
     if (!tool) throw new Error(`agy bridge: undeclared tool ${name}`)
-    const spilled = spilledOutput(this.agyDir, name, args)
+    const spilled = spilledOutput(this.agyDir, name, args, this.sessionId)
     if (spilled) {
       socket.end(JSON.stringify({ result: spilled }) + "\n")
       return null
@@ -5880,21 +5880,48 @@ function lastAssistantCalls(messages) {
 // has the model read that file. With magpie on a server (Docker) and the
 // client on another machine, the client's Read of that path fails: the
 // file is only where agy runs (Dani Ariyanto on Discord). So a read-type
-// tool whose one path is such a file is answered here, from the file, and
-// never reaches the client; null for any other call. Lines are numbered,
-// from offset (a line number) for at most limit lines when the call says.
-const SPILLED = /^brain[\\/][^\\/]+[\\/]\.system_generated[\\/]steps[\\/][^\\/]+[\\/]output\.txt$/
+// tool whose one path is exactly this process's own session file is
+// answered here, from the file, and never reaches the client. A path in
+// another session, a symlink, or a lexical escape returns null before the
+// file is opened. Lines are numbered, from offset (a line number) for at
+// most limit lines when the call says.
+const SPILL_SEGMENT = /^(?!\.{1,2}$)[^\\/\0]+$/
 
-export function spilledOutput(agyDir, name, args) {
-  if (!agyDir || !/read|view/i.test(name) || !args || typeof args !== "object") return null
+function spilledIdentity(agyDir, file, sessionId) {
+  if (typeof agyDir !== "string" || !agyDir || typeof file !== "string" || typeof sessionId !== "string") return null
+  if (!SPILL_SEGMENT.test(sessionId) || !path.isAbsolute(file)) return null
+  let relative
+  try { relative = path.relative(path.resolve(agyDir), path.resolve(file)) } catch { return null }
+  if (!relative || path.isAbsolute(relative) || relative.split(/[\\/]/).some((part) => part === "..")) return null
+  const parts = relative.split(/[\\/]/)
+  if (parts.length !== 6 || parts.some((part) => !SPILL_SEGMENT.test(part))) return null
+  const [brain, session, generated, steps, step, leaf] = parts
+  if (brain !== "brain" || session !== sessionId || generated !== ".system_generated" || steps !== "steps" || leaf !== "output.txt") return null
+  if (!SPILL_SEGMENT.test(step)) return null
+  return parts.join("/")
+}
+
+export function spilledOutput(agyDir, name, args, sessionId) {
+  if (!agyDir || !sessionId || typeof name !== "string" || !/read|view/i.test(name) || !args || typeof args !== "object" || Array.isArray(args)) return null
   const paths = Object.values(args).filter((value) => typeof value === "string" && path.isAbsolute(value))
-  if (paths.length !== 1 || !SPILLED.test(path.relative(agyDir, path.resolve(paths[0])))) return null
+  if (paths.length !== 1) return null
+  const wanted = spilledIdentity(agyDir, paths[0], sessionId)
+  if (!wanted) return null
   let text
   try {
-    // a link out of agy's folder is not followed
-    const real = fs.realpathSync(paths[0])
-    if (!SPILLED.test(path.relative(fs.realpathSync(agyDir), real))) return null
-    text = fs.readFileSync(real, "utf8")
+    // Stat each component. A symlink anywhere under agyDir is refused
+    // before the target is opened, including a link to another session.
+    let cursor = path.resolve(agyDir)
+    for (const part of wanted.split("/")) {
+      cursor = path.join(cursor, part)
+      if (fs.lstatSync(cursor).isSymbolicLink()) return null
+    }
+    const realDir = fs.realpathSync(agyDir)
+    const realFile = fs.realpathSync(paths[0])
+    if (spilledIdentity(realDir, realFile, sessionId) !== wanted) return null
+    const flags = fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0)
+    const fd = fs.openSync(paths[0], flags)
+    try { text = fs.readFileSync(fd, "utf8") } finally { fs.closeSync(fd) }
   } catch {
     return null
   }

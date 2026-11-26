@@ -621,6 +621,11 @@ export async function createBridgeKit(options = {}) {
     },
     "node:os": { homedir: () => home, tmpdir: () => tmp },
   }
+  if (options.nodeMocks) {
+    for (const [key, value] of Object.entries(options.nodeMocks)) {
+      overrides[key] = { ...(overrides[key] || {}), ...value }
+    }
+  }
   const runtime = new vm.SyntheticModule(RUNTIME_NAMES, function init() {
     this.setExport("Date", clock.Date)
     this.setExport("setTimeout", timers.setTimeout)
